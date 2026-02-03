@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>خداع: جريمة غامضة 🕵️‍♂️</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --primary: #f43f5e; /* لون الجريمة (أحمر) */
+            --secondary: #3b82f6; /* لون الشرطة (أزرق) */
+            --accent: #10b981; /* لون الأدلة (أخضر) */
+            --gold: #fbbf24;
+            --text: #f1f5f9;
+            --glass: rgba(15, 23, 42, 0.7);
+            --border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; user-select: none; }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #020617 100%);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        /* --- UI Elements --- */
+        .screen { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; position: absolute; top: 0; left: 0; overflow-y: auto; padding: 20px; }
+        .active { display: flex; }
+
+        .btn-main {
+            background: linear-gradient(135deg, var(--primary), #be123c);
+            color: white; border: none; padding: 15px 40px;
+            font-size: 1.2rem; font-weight: 900; border-radius: 12px;
+            cursor: pointer; box-shadow: 0 4px 20px rgba(244, 63, 94, 0.4);
+            transition: 0.2s; width: 100%; max-width: 300px;
+        }
+        .btn-main:active { transform: scale(0.98); }
+
+        .card-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%;
+        }
+
+        /* بطاقات اللعب (أسلحة وأدلة) */
+        .game-card {
+            background: rgba(255,255,255,0.05); border: var(--border);
+            padding: 15px 5px; border-radius: 8px; text-align: center;
+            font-weight: bold; cursor: pointer; transition: 0.2s;
+            display: flex; flex-direction: column; justify-content: center;
+            min-height: 80px; position: relative;
+        }
+        .game-card.weapon { border-bottom: 3px solid var(--primary); }
+        .game-card.evidence { border-bottom: 3px solid var(--secondary); }
+        .game-card.selected { background: var(--primary); color: white; border-color: white; transform: scale(1.05); z-index: 10; }
+        .game-card small { font-size: 0.7rem; opacity: 0.7; margin-bottom: 5px; display: block; }
+
+        /* --- 1. Landing --- */
+        #scr-landing { justify-content: center; text-align: center; }
+        #scr-landing h1 { font-size: 4rem; margin-bottom: 10px; color: var(--primary); text-shadow: 0 0 30px var(--primary); }
+
+        /* --- 2. TV Screen --- */
+        #scr-tv { justify-content: flex-start; padding-top: 60px; }
+        .tv-header { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 60px; 
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
+            display: flex; justify-content: space-between; align-items: center; padding: 0 30px; z-index: 100; border-bottom: var(--border);
+        }
+        .phase-indicator { font-size: 1.5rem; font-weight: 900; color: var(--gold); }
+        
+        /* شبكة اللاعبين في التلفزيون */
+        .tv-players-container { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 15px; width: 100%; padding-bottom: 100px;
+        }
+        .player-board {
+            background: rgba(255,255,255,0.03); border: var(--border);
+            border-radius: 12px; padding: 10px;
+        }
+        .pb-name { font-weight: bold; color: var(--gold); margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .pb-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+        .mini-card { 
+            font-size: 0.8rem; padding: 5px; background: rgba(0,0,0,0.3); 
+            border-radius: 4px; text-align: center; 
+        }
+        .mini-card.weapon { color: #fca5a5; }
+        .mini-card.evidence { color: #93c5fd; }
+
+        /* منطقة التلميحات (أسفل التلفزيون) */
+        .hints-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 120px;
+            background: rgba(15, 23, 42, 0.95); border-top: 2px solid var(--gold);
+            display: flex; gap: 10px; padding: 10px; overflow-x: auto; align-items: center;
+        }
+        .hint-tile {
+            min-width: 140px; height: 90px; background: #334155; border-radius: 8px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            border: 1px solid #475569; color: #cbd5e1;
+        }
+        .hint-tile.active { background: var(--gold); color: black; border-color: white; transform: translateY(-10px); }
+        .hint-category { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }
+        .hint-value { font-weight: 900; font-size: 1.1rem; text-align: center; }
+
+        /* --- Player/Forensic Interface --- */
+        #role-reveal-box {
+            background: white; color: black; padding: 30px; border-radius: 20px;
+            text-align: center; animation: popIn 0.5s; display: none;
+        }
+        .role-title { font-size: 2rem; font-weight: 900; color: var(--primary); margin: 10px 0; }
+        .role-desc { color: #666; margin-bottom: 20px; }
+
+        /* Forensic Controls */
+        .tile-selector {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; width: 100%;
+        }
+        .tile-btn {
+            background: #334155; padding: 15px; border-radius: 10px; text-align: center; cursor: pointer;
+        }
+        .tile-btn.selected { background: var(--gold); color: black; font-weight: bold; }
+
+        /* Night Phase Overlay */
+        #night-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; z-index: 9999; display: none;
+            flex-direction: column; justify-content: center; align-items: center; text-align: center;
+        }
+        #night-overlay h2 { color: #64748b; }
+
+        /* Accusation Modal */
+        #accusation-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 5000; display: none;
+            flex-direction: column; padding: 20px; overflow-y: auto;
+        }
+
+        /* Animations */
+        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(244, 63, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); } }
+
+    </style>
+</head>
+<body>
+
+    <div id="night-overlay">
+        <h1 style="font-size: 4rem;">🌑</h1>
+        <h2>الليل حل...</h2>
+        <p>أغمض عينيك وانتظر</p>
+    </div>
+
+    <div id="scr-landing" class="screen active">
+        <h1>🕵️‍♂️</h1>
+        <h1>خداع</h1>
+        <p>جريمة غامضة في هونغ كونغ</p>
+        <button class="btn-main" onclick="setupGame()">إنشاء غرفة جديدة</button>
+    </div>
+
+    <div id="scr-lobby" class="screen">
+        <h2>الغرفة: <span id="room-code" style="color:var(--gold)">...</span></h2>
+        <div id="qr-area" style="background:white; padding:10px; border-radius:10px; margin:20px 0;"></div>
+        <h3>المحققون المتواجدون:</h3>
+        <div id="lobby-players" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;"></div>
+        
+        <div id="admin-start-btn" style="display:none; width:100%; margin-top:30px;">
+            <button class="btn-main" onclick="startGame()">بدء اللعبة (توزيع الأدوار)</button>
+        </div>
+        
+        <div id="player-join-form" style="width:100%; max-width:300px; display:none;">
+            <input type="text" id="p-name-input" placeholder="اسم المحقق" style="width:100%; padding:15px; border-radius:10px; border:none; text-align:center; margin-bottom:10px;">
+            <button class="btn-main" onclick="joinGame()">دخول</button>
+        </div>
+    </div>
+
+    <div id="scr-tv" class="screen">
+        <div class="tv-header">
+            <div class="phase-indicator" id="tv-phase-disp">انتظار...</div>
+            <div style="font-weight:bold;">المحققون: <span id="tv-p-count">0</span></div>
+        </div>
+
+        <div id="tv-players-grid" class="tv-players-container">
+            </div>
+
+        <div id="tv-hints-bar" class="hints-bar">
+            <div class="hint-tile" style="opacity:0.5"><div class="hint-category">سبب الوفاة</div><div class="hint-value">؟</div></div>
+            <div class="hint-tile" style="opacity:0.5"><div class="hint-category">الموقع</div><div class="hint-value">؟</div></div>
+        </div>
+    </div>
+
+    <div id="scr-forensic" class="screen">
+        <h3 style="color:var(--gold); border-bottom:1px solid #333; width:100%; padding-bottom:10px;">👨‍⚕️ الطبيب الشرعي (أنت)</h3>
+        
+        <div style="background:#334155; padding:15px; border-radius:10px; margin-bottom:20px; border:1px solid var(--primary);">
+            <div style="font-size:0.8rem; color:#94a3b8;">الحل الصحيح (سري):</div>
+            <div style="font-weight:bold; color:var(--primary);">القاتل: <span id="adm-killer-name">...</span></div>
+            <div>🔫 <span id="adm-method">...</span> | 🧪 <span id="adm-evidence">...</span></div>
+        </div>
+
+        <div id="forensic-controls">
+            <h4>اختر تلميحاً للإرسال:</h4>
+            <div id="tile-selection-area" class="tile-selector"></div>
+        </div>
+        
+        <button class="btn-main" style="background:#333; margin-top:20px;" onclick="nextPhase()">نقل المرحلة (التالي)</button>
+    </div>
+
+    <div id="scr-player" class="screen">
+        <div id="role-reveal-box">
+            <div class="role-title" id="my-role-title">...</div>
+            <p class="role-desc" id="my-role-desc">...</p>
+            <button class="btn-main" onclick="document.getElementById('role-reveal-box').style.display='none';">فهمت</button>
+        </div>
+
+        <div id="p-game-area">
+            <h3 style="text-align:center;">أدواتك</h3>
+            <div class="card-grid" id="my-cards-grid"></div>
+            
+            <button id="btn-killer-confirm" class="btn-main" style="display:none; margin-top:20px; background:var(--primary);" onclick="killerSubmit()">تأكيد الجريمة 🩸</button>
+            <button id="btn-accuse" class="btn-main" style="display:none; margin-top:20px; background:var(--secondary);" onclick="openAccusation()">اعتراض / اتهام ✋</button>
+        </div>
+    </div>
+
+    <div id="accusation-modal">
+        <h2 style="color:white; text-align:center;">تقديم اتهام</h2>
+        <p style="color:#ccc; text-align:center;">تحذير: لديك فرصة واحدة فقط!</p>
+        
+        <label>المشتبه به:</label>
+        <select id="acc-suspect" style="width:100%; padding:15px; margin-bottom:10px; border-radius:8px;"></select>
+        
+        <label>سلاح الجريمة:</label>
+        <select id="acc-weapon" style="width:100%; padding:15px; margin-bottom:10px; border-radius:8px;"></select>
+        
+        <label>الدليل:</label>
+        <select id="acc-evidence" style="width:100%; padding:15px; margin-bottom:10px; border-radius:8px;"></select>
+        
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button class="btn-main" onclick="submitAccusation()">إرسال الاتهام</button>
+            <button class="btn-main" style="background:#333;" onclick="document.getElementById('accusation-modal').style.display='none'">إلغاء</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Database Config ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDh4v9gRCICA_XRCJXsDpbtCySYAoFsfhk",
+            authDomain: "bagera-word.firebaseapp.com",
+            databaseURL: "https://bagera-word-default-rtdb.firebaseio.com",
+            projectId: "bagera-word",
+            storageBucket: "bagera-word.firebasestorage.app",
+            messagingSenderId: "53001885470",
+            appId: "1:53001885470:web:c6649f9f259824f747db0f"
+        };
+        try { if(firebase.apps.length === 0) firebase.initializeApp(firebaseConfig); else firebase.app(); } catch(e) {}
+        const db = firebase.database();
+
+        // --- Data Lists (Hundreds of cards) ---
+        const WEAPONS = ["سم", "خنجر", "مسدس", "حبل", "وسادة", "مطرقة", "كهرباء", "غرق", "سيارة", "نار", "غاز", "متفجرات", "منشار", "حقنة", "صخرة", "فأس", "سيف", "تدافع", "عضة حيوان", "إشعاع"];
+        const EVIDENCE = ["بصمة", "شعر", "دم", "زر قميص", "تذكرة", "هاتف", "ساعة", "خاتم", "رسالة", "عطر", "تراب", "مفتاح", "نظارة", "قفاز", "كاميرا", "USB", "كوب", "عقب سيجارة", "فاتورة", "أحمر شفاه"];
+        
+        // Tiles for Forensic Scientist
+        const TILES = {
+            cause: ["نزيف", "اختناق", "تسمم", "حروق", "صدمة قوية"],
+            location: ["غابة", "منزل", "مدرسة", "مستشفى", "شارع", "حديقة", "بحر"],
+            trace: ["كدمة", "جرح", "آثار سحب", "لا يوجد"],
+            state: ["ملابس ممزقة", "مبتل", "مغطى بالتراب", "نظيف"],
+            time: ["فجر", "ظهر", "ليل", "غروب"]
+        };
+
+        // --- Global Vars ---
+        let roomId = new URLSearchParams(window.location.search).get('room');
+        let myRole = 'player'; // or 'admin'
+        let myId = localStorage.getItem('deception_uid') || Date.now().toString();
+        localStorage.setItem('deception_uid', myId);
+        let myName = '';
+        let myGameRole = ''; // Killer, Detective, etc.
+        let localPlayerCards = { w: [], e: [] };
+        let killerSelection = { w: null, e: null };
+
+        // --- Initialization ---
+        window.onload = function() {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            
+            // Check Mode
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('mode') === 'tv') {
+                document.getElementById('scr-tv').classList.add('active');
+                initTV();
+            } else if (roomId) {
+                // Check if admin or player
+                db.ref(`deception/${roomId}`).once('value', snap => {
+                    const data = snap.val();
+                    if(data && data.forensicId === myId) {
+                        myRole = 'admin';
+                        initForensic();
+                    } else {
+                        document.getElementById('scr-lobby').classList.add('active');
+                        document.getElementById('room-code').innerText = roomId;
+                        document.getElementById('player-join-form').style.display = 'block';
+                        initLobbyListener();
+                    }
+                });
+            } else {
+                document.getElementById('scr-landing').classList.add('active');
+            }
+        };
+
+        // --- Setup & Lobby ---
+        function setupGame() {
+            roomId = Math.random().toString(36).substr(2, 6).toUpperCase();
+            db.ref(`deception/${roomId}`).set({
+                state: 'lobby',
+                forensicId: myId,
+                phase: 0
+            }).then(() => {
+                window.location.href = `?room=${roomId}`;
+            });
+        }
+
+        function joinGame() {
+            const n = document.getElementById('p-name-input').value.trim();
+            if(!n) return alert("اكتب اسمك");
+            myName = n;
+            
+            // Generate Cards
+            const myWeapons = [];
+            const myEvidence = [];
+            for(let i=0; i<4; i++) myWeapons.push(WEAPONS[Math.floor(Math.random()*WEAPONS.length)]);
+            for(let i=0; i<4; i++) myEvidence.push(EVIDENCE[Math.floor(Math.random()*EVIDENCE.length)]);
+
+            db.ref(`deception/${roomId}/players/${myId}`).set({
+                name: n,
+                role: 'detective', // Default
+                cards: { w: myWeapons, e: myEvidence },
+                isAlive: true
+            }).then(() => {
+                initPlayerScreen();
+            });
+        }
+
+        function initLobbyListener() {
+            // Generate QR Code
+            const base = window.location.href.split('?')[0];
+            const url = `${base}?room=${roomId}`;
+            document.getElementById('qr-area').innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}" style="width:100%">`;
+
+            db.ref(`deception/${roomId}/players`).on('value', snap => {
+                const list = document.getElementById('lobby-players');
+                list.innerHTML = '';
+                if(snap.val()) {
+                    Object.values(snap.val()).forEach(p => {
+                        list.innerHTML += `<div style="background:#333; padding:5px 10px; border-radius:5px;">${p.name}</div>`;
+                    });
+                }
+            });
+        }
+
+        // --- Game Flow Control (Admin/Forensic) ---
+        function initForensic() {
+            document.getElementById('scr-forensic').classList.add('active');
+            // Listen for game state
+            db.ref(`deception/${roomId}`).on('value', snap => {
+                const data = snap.val();
+                if(!data) return;
+                
+                // Show admin specific views based on state
+                if(data.state === 'lobby') {
+                    // Show Lobby Controls
+                    document.getElementById('scr-lobby').classList.add('active');
+                    document.getElementById('scr-forensic').classList.remove('active');
+                    document.getElementById('room-code').innerText = roomId;
+                    document.getElementById('admin-start-btn').style.display = 'block';
+                    initLobbyListener();
+                } else {
+                    document.getElementById('scr-lobby').classList.remove('active');
+                    document.getElementById('scr-forensic').classList.add('active');
+                    
+                    // Update Forensic Dashboard
+                    if(data.crime) {
+                        document.getElementById('adm-killer-name').innerText = data.players[data.crime.killerId].name;
+                        document.getElementById('adm-method').innerText = data.crime.method;
+                        document.getElementById('adm-evidence').innerText = data.crime.evidence;
+                    }
+                    
+                    renderTileSelector();
+                }
+            });
+        }
+
+        function startGame() {
+            db.ref(`deception/${roomId}/players`).once('value', snap => {
+                const players = snap.val();
+                const ids = Object.keys(players);
+                if(ids.length < 2) return alert("لازم 3 لاعبين على الأقل (مع الطبيب)");
+
+                // Assign Roles (1 Killer, rest Detectives for MVP)
+                // In full version: add Accomplice/Witness based on count
+                const killerIndex = Math.floor(Math.random() * ids.length);
+                const killerId = ids[killerIndex];
+                
+                db.ref(`deception/${roomId}/players/${killerId}/role`).set('killer');
+                
+                // Start Night Phase
+                db.ref(`deception/${roomId}`).update({
+                    state: 'night_killer',
+                    phase: 1
+                });
+            });
+        }
+
+        function renderTileSelector() {
+            const area = document.getElementById('tile-selection-area');
+            area.innerHTML = '';
+            
+            // Example: Show Cause of Death tiles
+            const cats = Object.keys(TILES);
+            cats.forEach(cat => {
+                area.innerHTML += `<div class="tile-btn" onclick="sendHint('${cat}')">تلميح: ${cat}</div>`;
+            });
+        }
+
+        function sendHint(cat) {
+            const val = prompt(`اختر قيمة لـ ${cat}: \n` + TILES[cat].join(' - '));
+            if(val && TILES[cat].includes(val)) {
+                db.ref(`deception/${roomId}/hints`).push({ cat: cat, val: val });
+            } else {
+                alert("قيمة غير صحيحة، اختر من القائمة");
+            }
+        }
+
+        function nextPhase() {
+            // Simple phase switching logic
+            db.ref(`deception/${roomId}/state`).once('value', snap => {
+                const s = snap.val();
+                if(s === 'night_killer') db.ref(`deception/${roomId}`).update({ state: 'day' });
+            });
+        }
+
+        // --- Player Logic ---
+        function initPlayerScreen() {
+            document.getElementById('scr-lobby').classList.remove('active');
+            document.getElementById('scr-player').classList.add('active');
+
+            db.ref(`deception/${roomId}`).on('value', snap => {
+                const data = snap.val();
+                if(!data) return;
+                
+                // My Player Data
+                const me = data.players[myId];
+                myGameRole = me.role;
+                localPlayerCards = me.cards;
+
+                // Handle Night Overlay
+                const overlay = document.getElementById('night-overlay');
+                if(data.state.startsWith('night')) {
+                    if(data.state === 'night_killer' && myGameRole === 'killer') {
+                        overlay.style.display = 'none'; // Killer wakes up
+                        document.getElementById('btn-killer-confirm').style.display = 'block';
+                    } else {
+                        overlay.style.display = 'flex'; // Sleep
+                    }
+                } else {
+                    overlay.style.display = 'none'; // Day
+                    if(myGameRole !== 'killer') document.getElementById('btn-accuse').style.display = 'block';
+                }
+
+                // Render Cards
+                renderMyCards();
+                
+                // Show Role (One time)
+                if(!window.roleSeen) {
+                    document.getElementById('role-reveal-box').style.display = 'block';
+                    document.getElementById('my-role-title').innerText = (myGameRole === 'killer') ? 'أنت القاتل 🔪' : 'أنت محقق 🕵️‍♂️';
+                    document.getElementById('my-role-desc').innerText = (myGameRole === 'killer') ? 'اختر سلاحاً ودليلاً في الليل.' : 'اعثر على القاتل قبل فوات الأوان.';
+                    window.roleSeen = true;
+                }
+            });
+        }
+
+        function renderMyCards() {
+            const grid = document.getElementById('my-cards-grid');
+            grid.innerHTML = '';
+            
+            // Weapons
+            localPlayerCards.w.forEach(c => {
+                grid.innerHTML += `<div class="game-card weapon" onclick="selectCard(this, 'w', '${c}')"><small>سلاح</small>${c}</div>`;
+            });
+            // Evidence
+            localPlayerCards.e.forEach(c => {
+                grid.innerHTML += `<div class="game-card evidence" onclick="selectCard(this, 'e', '${c}')"><small>دليل</small>${c}</div>`;
+            });
+        }
+
+        function selectCard(el, type, val) {
+            // Only Killer selects in Night
+            if(myGameRole !== 'killer') return;
+            
+            // Highlight logic
+            if(type === 'w') {
+                document.querySelectorAll('.game-card.weapon').forEach(x => x.classList.remove('selected'));
+                killerSelection.w = val;
+            } else {
+                document.querySelectorAll('.game-card.evidence').forEach(x => x.classList.remove('selected'));
+                killerSelection.e = val;
+            }
+            el.classList.add('selected');
+        }
+
+        function killerSubmit() {
+            if(!killerSelection.w || !killerSelection.e) return alert("اختر سلاح ودليل!");
+            db.ref(`deception/${roomId}/crime`).set({
+                killerId: myId,
+                method: killerSelection.w,
+                evidence: killerSelection.e
+            });
+            document.getElementById('btn-killer-confirm').style.display = 'none';
+            alert("تم تنفيذ الجريمة... عد للنوم 🌑");
+        }
+
+        // --- TV Logic ---
+        function initTV() {
+            // Generate QR for joining
+            const base = window.location.href.split('?')[0];
+            console.log("TV Initialized for Room: " + roomId);
+            
+            db.ref(`deception/${roomId}`).on('value', snap => {
+                const data = snap.val();
+                if(!data) return;
+
+                // Update Phase
+                const phaseDisp = document.getElementById('tv-phase-disp');
+                if(data.state === 'lobby') phaseDisp.innerText = "اللوبي - انتظار اللاعبين";
+                else if(data.state.startsWith('night')) phaseDisp.innerText = "🌑 الليل - الجريمة تقع الآن";
+                else phaseDisp.innerText = "☀️ النهار - التحقيق";
+
+                // Render Players & Cards
+                const grid = document.getElementById('tv-players-grid');
+                grid.innerHTML = '';
+                if(data.players) {
+                    document.getElementById('tv-p-count').innerText = Object.keys(data.players).length;
+                    
+                    Object.values(data.players).forEach(p => {
+                        let cardsHtml = '';
+                        p.cards.w.forEach(c => cardsHtml += `<div class="mini-card weapon">${c}</div>`);
+                        p.cards.e.forEach(c => cardsHtml += `<div class="mini-card evidence">${c}</div>`);
+                        
+                        grid.innerHTML += `
+                        <div class="player-board">
+                            <div class="pb-name">${p.name}</div>
+                            <div class="pb-cards">${cardsHtml}</div>
+                        </div>`;
+                    });
+                }
+
+                // Render Hints
+                const hintsBar = document.getElementById('tv-hints-bar');
+                if(data.hints) {
+                    hintsBar.innerHTML = '';
+                    Object.values(data.hints).forEach(h => {
+                        hintsBar.innerHTML += `<div class="hint-tile active"><div class="hint-category">${h.cat}</div><div class="hint-value">${h.val}</div></div>`;
+                    });
+                }
+            });
+        }
+
+        // --- Accusation Logic ---
+        function openAccusation() {
+            const modal = document.getElementById('accusation-modal');
+            const sSuspect = document.getElementById('acc-suspect');
+            const sWeapon = document.getElementById('acc-weapon');
+            const sEvidence = document.getElementById('acc-evidence');
+            
+            // Populate lists from DB data (simplified for brevity)
+            // In real logic: fetch all players, flat map cards
+            // Here assuming player has cached data or fetch once
+            db.ref(`deception/${roomId}/players`).once('value', snap => {
+                const ps = snap.val();
+                sSuspect.innerHTML = ''; sWeapon.innerHTML = ''; sEvidence.innerHTML = '';
+                
+                Object.keys(ps).forEach(pid => {
+                    const p = ps[pid];
+                    sSuspect.innerHTML += `<option value="${pid}">${p.name}</option>`;
+                    p.cards.w.forEach(c => sWeapon.innerHTML += `<option>${c}</option>`);
+                    p.cards.e.forEach(c => sEvidence.innerHTML += `<option>${c}</option>`);
+                });
+                modal.style.display = 'flex';
+            });
+        }
+
+        function submitAccusation() {
+            const suspectId = document.getElementById('acc-suspect').value;
+            const w = document.getElementById('acc-weapon').value;
+            const e = document.getElementById('acc-evidence').value;
+            
+            db.ref(`deception/${roomId}/crime`).once('value', snap => {
+                const crime = snap.val();
+                if(crime.killerId === suspectId && crime.method === w && crime.evidence === e) {
+                    alert("🎉 إجابة صحيحة! تم القبض على القاتل!");
+                    db.ref(`deception/${roomId}`).update({ state: 'hunt_witness' });
+                } else {
+                    alert("❌ اتهام خاطئ! لقد خسرت شارتك.");
+                    // Remove ability to accuse again (Local & DB)
+                    document.getElementById('accusation-modal').style.display = 'none';
+                    document.getElementById('btn-accuse').remove();
+                }
+            });
+        }
+
+        // Utility to allow TV mode opening
+        function goTV() {
+            window.location.href = `?room=${roomId}&mode=tv`;
+        }
+
+    </script>
+</body>
+</html>
