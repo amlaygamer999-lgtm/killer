@@ -2,231 +2,183 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>جمارك 👮‍♂️📦</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة الجمارك أونلاين</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root {
-            --bg-dark: #111827;
-            --primary: #f59e0b; /* Gold for Sheriff */
-            --secondary: #10b981; /* Green for Success */
-            --danger: #ef4444; /* Red for Caught */
-            --card-bg: #1f2937;
-            --text: #f3f4f6;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
 
-        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; user-select: none; }
+        :root {
+            --bg-color: #f1c40f; 
+            --primary: #2c3e50;
+            --accent: #e74c3c;
+            --success: #27ae60;
+        }
 
         body {
-            margin: 0; padding: 0; font-family: 'Tajawal', sans-serif;
-            background: var(--bg-dark); color: var(--text);
-            height: 100vh; overflow: hidden;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background-image: radial-gradient(circle at 50% 50%, #374151 0%, #111827 100%);
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            color: #333;
         }
 
-        .screen { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; position: absolute; top: 0; left: 0; overflow-y: auto; padding: 15px; }
-        .active { display: flex; }
-
-        /* UI Elements */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
 
-        .btn-main {
-            background: linear-gradient(135deg, var(--primary), #d97706);
-            color: black; border: none; padding: 15px 40px;
-            font-size: 1.2rem; font-weight: 900; border-radius: 12px;
-            cursor: pointer; width: 100%; max-width: 300px;
-            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
-            transition: transform 0.1s;
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            width: 80%;
+            transition: 0.2s;
         }
-        .btn-main:active { transform: scale(0.98); }
+        .btn:active { transform: scale(0.95); }
+        .btn-green { background: var(--success); }
+        .btn-red { background: var(--accent); }
 
-        /* البطاقات (البضائع) */
-        .goods-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; margin-bottom: 20px; }
-        .good-card {
-            background: var(--card-bg); border: 2px solid #374151; border-radius: 10px;
-            padding: 10px; text-align: center; cursor: pointer; position: relative;
-            height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+        input {
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #ddd;
+            width: 70%;
+            font-family: 'Cairo', sans-serif;
+            font-size: 16px;
         }
-        .good-card.selected { border-color: var(--primary); background: rgba(245, 158, 11, 0.1); transform: translateY(-5px); }
-        .good-icon { font-size: 2.5rem; margin-bottom: 5px; }
-        .good-name { font-size: 0.8rem; font-weight: bold; }
-        .good-val { font-size: 0.7rem; color: #9ca3af; }
-        .good-illegal { color: var(--danger); }
 
-        /* --- 1. Landing --- */
-        #scr-landing { justify-content: center; text-align: center; }
-        #scr-landing h1 { font-size: 4rem; margin-bottom: 0; color: var(--primary); }
-        
-        /* --- 2. TV Screen --- */
-        #scr-tv { padding-top: 20px; }
-        .tv-header {
-            width: 100%; display: flex; justify-content: space-between; align-items: center;
-            background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 15px; margin-bottom: 20px;
-        }
-        .sheriff-badge { font-size: 2rem; }
-        
-        .players-status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; width: 100%; }
-        .p-stat-card { background: #1f2937; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #374151; position: relative; overflow: hidden; }
-        .p-stat-score { font-size: 1.5rem; font-weight: 900; color: var(--primary); }
-        
-        /* Bag Reveal Animation Area */
-        #tv-action-area { 
-            margin-top: 30px; width: 100%; flex-grow: 1; display: flex; 
-            justify-content: center; align-items: center; flex-direction: column;
-        }
-        .bag-reveal { font-size: 8rem; animation: shake 0.5s infinite; }
-        @keyframes shake { 0% { transform: rotate(0deg); } 25% { transform: rotate(5deg); } 75% { transform: rotate(-5deg); } }
+        .screen { display: none; }
+        .active-screen { display: block; animation: fadeIn 0.5s; }
 
-        /* --- 3. Player Screen --- */
-        #scr-player { max-width: 600px; margin: 0 auto; }
-        .role-header { 
-            width: 100%; text-align: center; padding: 15px; margin-bottom: 20px; 
-            border-radius: 15px; background: rgba(0,0,0,0.3);
-        }
-        
-        /* Smuggler UI */
-        .declaration-box { 
-            background: #1f2937; padding: 20px; border-radius: 15px; width: 100%; 
-            text-align: center; display: none; border: 1px solid var(--primary);
-        }
-        
-        /* Sheriff UI */
-        .inspection-list { width: 100%; display: flex; flex-direction: column; gap: 10px; }
-        .inspect-row { 
-            background: #1f2937; padding: 15px; border-radius: 12px; 
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .inspect-actions button { margin-left: 5px; padding: 8px 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
-        .btn-pass { background: var(--secondary); color: white; }
-        .btn-inspect { background: var(--danger); color: white; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* --- 4. Admin --- */
-        #scr-admin { padding: 20px; }
-        .admin-panel { background: #1f2937; padding: 20px; border-radius: 15px; width: 100%; }
-
-        /* Alerts */
-        #overlay-result {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 9999; display: none;
-            flex-direction: column; justify-content: center; align-items: center; text-align: center;
+        .player-card {
+            background: #eee;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        #res-emoji { font-size: 6rem; margin-bottom: 10px; }
-        #res-title { font-size: 3rem; margin: 0; font-weight: 900; }
-        #res-desc { font-size: 1.5rem; color: #ccc; }
+
+        .goods-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .good-item {
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            user-select: none;
+        }
+
+        .good-item.selected {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .qr-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .status-badge {
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            color: white;
+        }
+        .status-wait { background: #95a5a6; }
+        .status-ready { background: #27ae60; }
 
     </style>
 </head>
 <body>
 
-    <div id="overlay-result">
-        <div id="res-emoji">👮‍♂️</div>
-        <div id="res-title">تم التفتيش!</div>
-        <div id="res-desc">...</div>
-    </div>
-
-    <div id="scr-landing" class="screen active">
-        <div style="font-size:5rem;">👮‍♂️📦</div>
-        <h1>جمارك</h1>
-        <p style="color:#9ca3af; margin-bottom:30px;">تحدي التهريب والتفتيش</p>
-        <button class="btn-main" onclick="setupGame()">إنشاء نقطة تفتيش 🚧</button>
-    </div>
-
-    <div id="scr-connect" class="screen">
-        <h2 style="color:var(--primary)">انضم للنقطة</h2>
-        <div style="background:white; padding:15px; border-radius:15px; margin:20px 0;" id="qr-box"></div>
-        <button class="btn-main" onclick="goTV()">فتح الشاشة 📺</button>
-        <div id="lobby-players-list" style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;"></div>
-        <div id="admin-controls-lobby" style="display:none; width:100%; margin-top:20px;">
-            <button class="btn-main" style="background:#10b981; color:white;" onclick="startGame()">بدء اللعب (توزيع الأدوار)</button>
+    <div class="container">
+        <div id="screen-login" class="screen active-screen">
+            <h1>لعبة الجمارك 👮‍♂️</h1>
+            <p>أدخل اسمك للانضمام:</p>
+            <input type="text" id="username" placeholder="اسمك هنا...">
+            <br>
+            <button class="btn" id="joinBtn">دخول اللعبة</button>
         </div>
-    </div>
 
-    <div id="scr-tv" class="screen">
-        <div class="tv-header">
-            <div style="display:flex; align-items:center; gap:10px;">
-                <span class="sheriff-badge">👮‍♂️</span>
-                <div>
-                    <div style="font-size:0.8rem; color:#9ca3af;">المفتش الحالي</div>
-                    <div style="font-weight:bold; font-size:1.2rem;" id="tv-sheriff-name">...</div>
-                </div>
+        <div id="screen-lobby" class="screen">
+            <h1>غرفة الانتظار</h1>
+            <p>امسح الباركود لدعوة الأصدقاء:</p>
+            <div id="qrcode" class="qr-container"></div>
+            
+            <h3>اللاعبون المتصلون (<span id="player-count">0</span>):</h3>
+            <div id="lobby-list" style="text-align: right; margin-bottom: 20px;"></div>
+            
+            <div id="host-controls" style="display:none;">
+                <p style="color:red; font-size:12px;">*أنت أول لاعب (المضيف)، يمكنك بدء اللعبة</p>
+                <button class="btn btn-green" id="startBtn">بدء اللعبة</button>
             </div>
-            <div style="background:#374151; padding:5px 15px; border-radius:20px; font-weight:bold;" id="tv-phase">انتظار...</div>
+            <p id="wait-msg">في انتظار المضيف لبدء اللعبة...</p>
         </div>
 
-        <div id="tv-players-grid" class="players-status-grid"></div>
+        <div id="screen-selection" class="screen">
+            <h2>📦 حقيبتك</h2>
+            <p id="role-desc">أنت مسافر، اختر 5 بضائع:</p>
+            <div class="goods-grid" id="goods-container"></div>
+            <p>اخترت: <span id="selection-count">0</span> / 5</p>
+            <button class="btn btn-green" id="confirmSelectionBtn" disabled>تأكيد الحقيبة</button>
+        </div>
 
-        <div id="tv-action-area">
-            <div style="font-size:2rem; color:#6b7280;">منطقة التفتيش</div>
+        <div id="screen-waiting-officer" class="screen">
+            <h2>⏳ انتظر...</h2>
+            <p>الجمركي يقوم بالتفتيش الآن!</p>
+            <div class="loader">👮‍♂️</div>
+        </div>
+
+        <div id="screen-officer" class="screen">
+            <h1>👮‍♂️ نقطة التفتيش</h1>
+            <p>أنت الجمركي! اختر شخصاً لتفتيشه:</p>
+            <div id="officer-targets"></div>
+        </div>
+
+        <div id="screen-result" class="screen">
+            <h1>📄 نتيجة الجولة</h1>
+            <div id="result-content"></div>
+            <br>
+            <div id="officer-next-controls" style="display:none;">
+                <button class="btn" id="nextRoundBtn">الجولة التالية</button>
+            </div>
+            <p id="waiting-next-round" style="display:none;">في انتظار الجولة التالية...</p>
+        </div>
+        
+        <div id="scoreboard-area" style="display:none; margin-top:20px; border-top:1px solid #ccc; padding-top:10px;">
+            <h3>💰 الأرصدة</h3>
+            <div id="live-scoreboard"></div>
         </div>
     </div>
 
-    <div id="scr-player" class="screen">
-        <div id="login-form" style="text-align:center; width:100%; margin-top:50px;">
-            <h2>سجل دخولك يا مهرب 🕵️</h2>
-            <input type="text" id="p-name" placeholder="اسمك" style="width:100%; padding:15px; margin-bottom:15px; border-radius:10px; border:none; text-align:center;">
-            <button class="btn-main" onclick="joinGame()">دخول</button>
-        </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue, update, push, remove, get } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
-        <div id="game-interface" style="display:none; width:100%;">
-            <div class="role-header" id="role-display">
-                <div style="font-size:2rem;" id="role-icon">📦</div>
-                <h2 style="margin:5px 0;" id="role-text">أنت مهرب</h2>
-                <div style="font-size:0.9rem; color:var(--primary);">نقاطك: <span id="my-score">0</span></div>
-            </div>
-
-            <div id="smuggler-ui" style="display:none;">
-                <h3 style="margin-bottom:10px;">اختر بضاعتك (الشنطة)</h3>
-                <div class="goods-grid" id="my-hand"></div>
-                <button id="btn-prepare-bag" class="btn-main" onclick="showDeclaration()">تجهيز الشنطة 💼</button>
-
-                <div id="declaration-ui" class="declaration-box">
-                    <h3>ماذا يوجد في شنطتك؟</h3>
-                    <p style="color:#9ca3af; font-size:0.9rem;">(أخبر المفتش بما تريد، حتى لو كذب)</p>
-                    <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:20px;">
-                        <input type="number" id="decl-count" value="1" min="1" max="5" style="width:60px; padding:10px; text-align:center; border-radius:8px; border:none;">
-                        <select id="decl-type" style="padding:10px; border-radius:8px; border:none; width:150px;">
-                            <option value="apple">🍎 تفاح (حلال)</option>
-                            <option value="bread">🥖 خبز (حلال)</option>
-                            <option value="chicken">🍗 دجاج (حلال)</option>
-                        </select>
-                    </div>
-                    <button class="btn-main" onclick="submitBag()">تسليم الشنطة للمفتش 🚀</button>
-                    <button style="background:transparent; border:none; color:#9ca3af; margin-top:10px;" onclick="cancelDeclaration()">تراجع</button>
-                </div>
-                
-                <div id="waiting-msg" style="text-align:center; display:none; margin-top:20px;">
-                    <h3>💼 الشنطة عند المفتش...</h3>
-                    <p>يا رب تعدي...</p>
-                </div>
-            </div>
-
-            <div id="sheriff-ui" style="display:none;">
-                <h3>قائمة المشتبه بهم</h3>
-                <div id="inspection-list" class="inspection-list"></div>
-                <div id="no-suspects" style="text-align:center; color:#6b7280; margin-top:20px;">لا يوجد أحد جاهز للتفتيش بعد...</div>
-            </div>
-        </div>
-    </div>
-
-    <div id="scr-admin" class="screen">
-        <div class="admin-panel">
-            <h2>التحكم</h2>
-            <button class="btn-main" style="margin-bottom:10px;" onclick="nextRound()">جولة جديدة / تغيير المفتش</button>
-            <button class="btn-main" style="background:#ef4444;" onclick="fullReset()">تصفير اللعبة</button>
-        </div>
-    </div>
-
-    <script>
-        // --- Firebase Config ---
+        // --- إعدادات Firebase الخاصة بك ---
         const firebaseConfig = {
             apiKey: "AIzaSyDh4v9gRCICA_XRCJXsDpbtCySYAoFsfhk",
             authDomain: "bagera-word.firebaseapp.com",
@@ -236,397 +188,331 @@
             messagingSenderId: "53001885470",
             appId: "1:53001885470:web:c6649f9f259824f747db0f"
         };
-        try { if(firebase.apps.length === 0) firebase.initializeApp(firebaseConfig); else firebase.app(); } catch(e) {}
-        const db = firebase.database();
 
-        // --- Game Data ---
-        const GOODS = {
-            apple: { name: "تفاح", icon: "🍎", val: 10, type: "legal" },
-            bread: { name: "خبز", icon: "🥖", val: 10, type: "legal" },
-            chicken: { name: "دجاج", icon: "🍗", val: 20, type: "legal" },
-            diamond: { name: "الماسة", icon: "💎", val: 60, type: "illegal", penalty: 30 },
-            gun: { name: "سلاح", icon: "🔫", val: 80, type: "illegal", penalty: 40 }
-        };
-        const DECK = ['apple','apple','apple','bread','bread','chicken','chicken','diamond','gun','apple','bread'];
+        // تهيئة التطبيق
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-        let roomId = new URLSearchParams(window.location.search).get('room');
-        let myId = localStorage.getItem('jamarek_uid') || Date.now().toString();
-        localStorage.setItem('jamarek_uid', myId);
-        let myRole = ''; // 'sheriff' or 'smuggler'
-        let myHand = [];
-        let selectedCards = [];
+        // --- متغيرات اللعبة المحلية ---
+        let myId = localStorage.getItem('game_userId');
+        if (!myId) {
+            myId = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('game_userId', myId);
+        }
+        
+        let myName = "";
+        let currentRole = ""; // 'officer' or 'traveler'
+        let mySelection = [];
+        const GOODS = [
+            { name: "🧀 جبن", type: "legal", id: "cheese" },
+            { name: "🥚 بيض", type: "legal", id: "eggs" },
+            { name: "🥛 حليب", type: "legal", id: "milk" },
+            { name: "🥛 لبن", type: "legal", id: "laban" },
+            { name: "🍾 خمر (ممنوع)", type: "illegal", id: "alcohol" },
+            { name: "💊 مخدرات (ممنوع)", type: "illegal", id: "drugs" },
+            { name: "🔫 أسلحة (ممنوع)", type: "illegal", id: "weapon" }
+        ];
 
-        // --- Init ---
-        window.onload = function() {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            const mode = new URLSearchParams(window.location.search).get('mode');
-            
-            if(mode === 'tv') {
-                document.getElementById('scr-tv').classList.add('active');
-                initTV();
-            } else if(roomId) {
-                // Check if admin
-                db.ref(`jamarek/${roomId}`).once('value', snap => {
-                    if(snap.exists()) {
-                        // Check if I am already registered
-                        if(localStorage.getItem('jamarek_joined_' + roomId)) {
-                            document.getElementById('scr-player').classList.add('active');
-                            document.getElementById('login-form').style.display = 'none';
-                            document.getElementById('game-interface').style.display = 'block';
-                            initPlayer();
-                        } else {
-                            document.getElementById('scr-player').classList.add('active');
-                        }
-                        
-                        // Show admin controls if creator
-                        if(snap.val().creator === myId) {
-                            // Can add special admin button here if needed
-                        }
-                    } else {
-                        // Room doesn't exist or just created
-                        document.getElementById('scr-connect').classList.add('active');
-                        initLobby();
-                    }
-                });
-            } else {
-                document.getElementById('scr-landing').classList.add('active');
-            }
+        // --- التعامل مع واجهة المستخدم ---
+        const screens = {
+            login: document.getElementById('screen-login'),
+            lobby: document.getElementById('screen-lobby'),
+            selection: document.getElementById('screen-selection'),
+            waitingOfficer: document.getElementById('screen-waiting-officer'),
+            officer: document.getElementById('screen-officer'),
+            result: document.getElementById('screen-result')
         };
 
-        // --- Core ---
-        function setupGame() {
-            roomId = Math.random().toString(36).substr(2, 6).toUpperCase();
-            db.ref(`jamarek/${roomId}`).set({
-                state: 'lobby',
-                creator: myId,
-                round: 1
-            }).then(() => {
-                window.location.href = `?room=${roomId}&role=admin`;
-            });
+        function showScreen(name) {
+            Object.values(screens).forEach(s => s.classList.remove('active-screen'));
+            screens[name].classList.add('active-screen');
         }
 
-        function goTV() {
-            window.open(`?room=${roomId}&mode=tv`, '_blank');
-        }
+        // --- منطق الدخول واللوبي ---
+        
+        // توليد الباركود
+        new QRCode(document.getElementById("qrcode"), {
+            text: window.location.href,
+            width: 128,
+            height: 128
+        });
 
-        // --- Lobby ---
-        function initLobby() {
-            const url = window.location.href.split('?')[0] + `?room=${roomId}`;
-            document.getElementById('qr-box').innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(url)}" style="width:100%">`;
-            document.getElementById('admin-controls-lobby').style.display = 'block';
-
-            db.ref(`jamarek/${roomId}/players`).on('value', snap => {
-                const div = document.getElementById('lobby-players-list');
-                div.innerHTML = '';
-                if(snap.val()) {
-                    Object.values(snap.val()).forEach(p => {
-                        div.innerHTML += `<div style="background:#374151; padding:5px 15px; border-radius:20px;">${p.name}</div>`;
-                    });
-                }
-            });
-        }
-
-        function startGame() {
-            // Assign Sheriff (Random)
-            db.ref(`jamarek/${roomId}/players`).once('value', snap => {
-                const players = snap.val();
-                if(!players) return;
-                const ids = Object.keys(players);
-                const sheriffId = ids[Math.floor(Math.random() * ids.length)];
-                
-                let updates = {};
-                updates[`jamarek/${roomId}/state`] = 'playing';
-                updates[`jamarek/${roomId}/sheriff`] = sheriffId;
-                
-                // Reset hands
-                ids.forEach(id => {
-                    const hand = [];
-                    for(let i=0; i<5; i++) hand.push(DECK[Math.floor(Math.random()*DECK.length)]);
-                    updates[`jamarek/${roomId}/players/${id}/hand`] = hand;
-                    updates[`jamarek/${roomId}/players/${id}/status`] = 'thinking'; // thinking, ready, passed, inspected
-                    updates[`jamarek/${roomId}/players/${id}/bag`] = null;
-                });
-
-                db.ref().update(updates);
-                document.getElementById('scr-connect').classList.remove('active');
-                // Redirect admin to player screen if they are playing
-                document.getElementById('scr-player').classList.add('active');
-                initPlayer();
-            });
-        }
-
-        // --- Player ---
-        function joinGame() {
-            const name = document.getElementById('p-name').value;
-            if(!name) return;
+        document.getElementById('joinBtn').addEventListener('click', () => {
+            const name = document.getElementById('username').value.trim();
+            if (!name) return alert('اكتب اسمك!');
+            myName = name;
             
-            db.ref(`jamarek/${roomId}/players/${myId}`).set({
+            // تسجيل اللاعب في قاعدة البيانات
+            const playerRef = ref(db, 'game/players/' + myId);
+            set(playerRef, {
                 name: name,
-                score: 0
+                money: 50,
+                status: 'ready',
+                isOfficer: false
             }).then(() => {
-                localStorage.setItem('jamarek_joined_' + roomId, 'true');
-                document.getElementById('login-form').style.display = 'none';
-                document.getElementById('game-interface').style.display = 'block';
-                initPlayer();
+                showScreen('lobby');
+                // التحقق إذا كنت أنا الأول (لأكون المضيف)
+                checkIfHost();
             });
-        }
+        });
 
-        function initPlayer() {
-            db.ref(`jamarek/${roomId}`).on('value', snap => {
-                const data = snap.val();
-                if(!data) return;
-
-                const me = data.players[myId];
-                if(!me) return; // Kicked or error
-
-                document.getElementById('my-score').innerText = me.score || 0;
-
-                // Determine Role
-                if(data.sheriff === myId) {
-                    myRole = 'sheriff';
-                    document.getElementById('role-icon').innerText = '👮‍♂️';
-                    document.getElementById('role-text').innerText = 'أنت المفتش';
-                    document.getElementById('smuggler-ui').style.display = 'none';
-                    document.getElementById('sheriff-ui').style.display = 'block';
-                    renderSheriffView(data.players);
-                } else {
-                    myRole = 'smuggler';
-                    document.getElementById('role-icon').innerText = '🧳';
-                    document.getElementById('role-text').innerText = 'أنت مهرب';
-                    document.getElementById('sheriff-ui').style.display = 'none';
-                    document.getElementById('smuggler-ui').style.display = 'block';
-                    
-                    if(me.status === 'ready') {
-                        document.getElementById('waiting-msg').style.display = 'block';
-                        document.getElementById('my-hand').style.display = 'none';
-                        document.getElementById('btn-prepare-bag').style.display = 'none';
-                    } else if (me.status === 'thinking') {
-                        document.getElementById('waiting-msg').style.display = 'none';
-                        document.getElementById('my-hand').style.display = 'grid';
-                        document.getElementById('btn-prepare-bag').style.display = 'block';
-                        myHand = me.hand || [];
-                        renderHand();
-                    }
+        function checkIfHost() {
+            get(ref(db, 'game/players')).then((snapshot) => {
+                const players = snapshot.val() || {};
+                const ids = Object.keys(players);
+                // إذا كنت أول واحد دخلت، تظهر لي أزرار التحكم
+                if (ids[0] === myId) {
+                    document.getElementById('host-controls').style.display = 'block';
+                    document.getElementById('wait-msg').style.display = 'none';
                 }
             });
         }
 
-        function renderHand() {
-            const grid = document.getElementById('my-hand');
-            if(grid.innerHTML && selectedCards.length > 0) return; // Don't redraw if selecting
-            grid.innerHTML = '';
+        document.getElementById('startBtn').addEventListener('click', () => {
+            // إعداد اللعبة وبدء الجولة الأولى
+            update(ref(db, 'game'), {
+                state: 'selecting',
+                round: 1,
+                officerIndex: 0 // أول لاعب في القائمة هو الجمركي
+            });
+        });
+
+        // --- الاستماع لتغيرات اللعبة (قلب المحرك) ---
+        onValue(ref(db, 'game'), (snapshot) => {
+            const gameData = snapshot.val();
+            if (!gameData) return; // لا توجد لعبة بعد
+
+            const players = gameData.players || {};
+            const playerList = Object.keys(players).map(k => ({...players[k], id: k}));
             
-            myHand.forEach((item, idx) => {
-                const info = GOODS[item];
-                grid.innerHTML += `
-                <div class="good-card ${info.type === 'illegal' ? 'good-illegal' : ''}" onclick="toggleCard(this, '${item}', ${idx})">
-                    <div class="good-icon">${info.icon}</div>
-                    <div class="good-name">${info.name}</div>
-                    <div class="good-val">${info.val}ن</div>
-                </div>`;
+            // تحديث قائمة اللوبي
+            document.getElementById('player-count').innerText = playerList.length;
+            document.getElementById('lobby-list').innerHTML = playerList.map(p => 
+                `<div class="player-card"><span>${p.name}</span> <span class="status-badge status-ready">متصل</span></div>`
+            ).join('');
+
+            // تحديث جدول النتائج دائماً
+            document.getElementById('scoreboard-area').style.display = 'block';
+            document.getElementById('live-scoreboard').innerHTML = playerList.map(p => 
+                `<div style="display:flex; justify-content:space-between; font-size:14px; margin:5px 0;">
+                    <span>${p.isOfficer ? '👮‍♂️' : '👤'} ${p.name}</span>
+                    <span style="color:${p.money < 0 ? 'red' : 'green'}">${p.money} ريال</span>
+                </div>`
+            ).join('');
+
+            // --- إدارة حالات اللعبة ---
+            
+            // تحديد من هو الجمركي لهذه الجولة
+            const sortedIds = Object.keys(players).sort(); // ترتيب ثابت
+            const officerId = sortedIds[gameData.officerIndex % sortedIds.length];
+            const amIOfficer = (myId === officerId);
+
+            // تحديث حالة اللاعبين في قاعدة البيانات (للعرض فقط)
+            if (players[myId] && players[myId].isOfficer !== amIOfficer) {
+                update(ref(db, 'game/players/' + myId), { isOfficer: amIOfficer });
+            }
+
+            // 1. حالة اختيار البضائع
+            if (gameData.state === 'selecting') {
+                if (amIOfficer) {
+                    showScreen('waitingOfficer');
+                    document.querySelector('#screen-waiting-officer h2').innerText = "أنت الجمركي 👮‍♂️";
+                    document.querySelector('#screen-waiting-officer p').innerText = "انتظر حتى يختار المهربون بضائعهم...";
+                } else {
+                    // إذا كنت مسافر ولم اختر بعد
+                    if (players[myId].hasSelected) {
+                        showScreen('waitingOfficer');
+                        document.querySelector('#screen-waiting-officer h2').innerText = "تم الإرسال ✅";
+                        document.querySelector('#screen-waiting-officer p').innerText = "انتظر دور الجمركي...";
+                    } else {
+                        showScreen('selection');
+                        renderGoods();
+                    }
+                }
+            }
+
+            // 2. حالة التفتيش (الجمركي يختار)
+            else if (gameData.state === 'inspecting') {
+                if (amIOfficer) {
+                    showScreen('officer');
+                    renderOfficerTargets(players, myId);
+                } else {
+                    showScreen('waitingOfficer');
+                    document.querySelector('#screen-waiting-officer h2').innerText = "🔍 تفتيش!";
+                    document.querySelector('#screen-waiting-officer p').innerText = "الجمركي يختار ضحية الآن...";
+                }
+            }
+
+            // 3. حالة النتيجة
+            else if (gameData.state === 'result') {
+                showScreen('result');
+                document.getElementById('result-content').innerHTML = gameData.lastResultHtml || "انتهت الجولة";
+                
+                if (amIOfficer) {
+                    document.getElementById('officer-next-controls').style.display = 'block';
+                    document.getElementById('waiting-next-round').style.display = 'none';
+                } else {
+                    document.getElementById('officer-next-controls').style.display = 'none';
+                    document.getElementById('waiting-next-round').style.display = 'block';
+                }
+            }
+        });
+
+        // --- دوال اللعب ---
+
+        // عرض البضائع للاختيار
+        function renderGoods() {
+            const container = document.getElementById('goods-container');
+            if (container.innerHTML !== '') return; // تم الرسم مسبقاً
+            
+            container.innerHTML = '';
+            GOODS.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'good-item ' + (item.type === 'illegal' ? 'illegal' : '');
+                div.innerText = item.name;
+                div.onclick = () => selectItem(item, div);
+                container.appendChild(div);
             });
         }
 
-        function toggleCard(el, item, idx) {
-            if(el.classList.contains('selected')) {
-                el.classList.remove('selected');
-                selectedCards = selectedCards.filter(c => c.idx !== idx);
-            } else {
-                if(selectedCards.length >= 5) return alert("الشنطة مليانة!");
-                el.classList.add('selected');
-                selectedCards.push({item, idx});
+        function selectItem(item, div) {
+            if (mySelection.length >= 5) return alert("الحد الأقصى 5 بضائع!");
+            
+            mySelection.push(item);
+            div.style.background = '#2c3e50';
+            div.style.color = 'white';
+            
+            document.getElementById('selection-count').innerText = mySelection.length;
+            if (mySelection.length === 5) {
+                document.getElementById('confirmSelectionBtn').disabled = false;
             }
         }
 
-        function showDeclaration() {
-            if(selectedCards.length === 0) return alert("اختر بضاعة أولاً!");
-            document.getElementById('my-hand').style.display = 'none';
-            document.getElementById('btn-prepare-bag').style.display = 'none';
-            document.getElementById('declaration-ui').style.display = 'block';
-            document.getElementById('decl-count').value = selectedCards.length;
-        }
-
-        function cancelDeclaration() {
-            document.getElementById('declaration-ui').style.display = 'none';
-            document.getElementById('my-hand').style.display = 'grid';
-            document.getElementById('btn-prepare-bag').style.display = 'block';
-        }
-
-        function submitBag() {
-            const count = document.getElementById('decl-count').value;
-            const type = document.getElementById('decl-type').value;
-            const declaration = `${count} ${GOODS[type].name}`;
+        document.getElementById('confirmSelectionBtn').addEventListener('click', () => {
+            // إرسال البضائع للسيرفر
+            update(ref(db, 'game/players/' + myId), {
+                hand: mySelection,
+                hasSelected: true
+            });
             
-            const bagItems = selectedCards.map(c => c.item);
-
-            db.ref(`jamarek/${roomId}/players/${myId}`).update({
-                bag: bagItems,
-                declaration: declaration,
-                declaredType: type, // Store what they claimed it is
-                status: 'ready'
+            // التحقق هل انتهى الجميع؟ (منطق مبسط: ننتقل للتفتيش يدوياً أو بعد ثواني، هنا سنجعله فورياً)
+            // سننتظر التحديث القادم من السيرفر.
+            // **ملاحظة:** لتحسين اللعبة، يمكن للمضيف فقط نقل الحالة، أو نجعلها تلقائية.
+            // لتبسيط الكود، سنجعل آخر لاعب يختار هو من يقلب الحالة إلى التفتيش.
+            get(ref(db, 'game/players')).then(snap => {
+                const all = Object.values(snap.val());
+                const smugglers = all.filter(p => !p.isOfficer);
+                const allSelected = smugglers.every(p => p.hasSelected);
+                
+                if (allSelected) {
+                    update(ref(db, 'game'), { state: 'inspecting' });
+                }
             });
+        });
 
-            document.getElementById('declaration-ui').style.display = 'none';
-            selectedCards = [];
-        }
-
-        // --- Sheriff Logic ---
-        function renderSheriffView(players) {
-            const list = document.getElementById('inspection-list');
-            list.innerHTML = '';
-            let hasSuspects = false;
-
+        // واجهة الجمركي
+        function renderOfficerTargets(players, myId) {
+            const div = document.getElementById('officer-targets');
+            div.innerHTML = '';
+            
             Object.keys(players).forEach(pid => {
-                if(pid === myId) return; // Don't inspect self
                 const p = players[pid];
-                
-                if(p.status === 'ready') {
-                    hasSuspects = true;
-                    list.innerHTML += `
-                    <div class="inspect-row">
+                if (pid !== myId) { // لا تفتش نفسك
+                    const btn = document.createElement('div');
+                    btn.className = 'player-card';
+                    btn.innerHTML = `
+                        <span>👤 ${p.name}</span>
                         <div>
-                            <div style="font-weight:bold; color:var(--primary);">${p.name}</div>
-                            <div style="font-size:0.9rem;">يقول: "معي ${p.declaration}"</div>
+                            <button class="btn-red" style="padding:5px 10px; font-size:14px;">تفتيش 🔍</button>
+                            <button class="btn-green" style="padding:5px 10px; font-size:14px;">تمشية 👋</button>
                         </div>
-                        <div class="inspect-actions">
-                            <button class="btn-pass" onclick="decide('${pid}', 'pass')">🤝 تمشية</button>
-                            <button class="btn-inspect" onclick="decide('${pid}', 'inspect')">🔍 تفتيش</button>
-                        </div>
-                    </div>`;
+                    `;
+                    
+                    // زر التفتيش
+                    btn.querySelector('.btn-red').onclick = () => performAction(pid, 'inspect', p);
+                    // زر التمشية
+                    btn.querySelector('.btn-green').onclick = () => performAction(pid, 'pass', p);
+                    
+                    div.appendChild(btn);
                 }
             });
-
-            document.getElementById('no-suspects').style.display = hasSuspects ? 'none' : 'block';
         }
 
-        function decide(pid, action) {
-            // Logic handled by Sheriff client for now (secure enough for MVP)
-            db.ref(`jamarek/${roomId}/players/${pid}`).once('value', snap => {
-                const p = snap.val();
-                const bag = p.bag;
-                const declaredType = p.declaredType;
+        function performAction(targetId, action, targetPlayer) {
+            let resultHtml = "";
+            let updates = {};
+            
+            if (action === 'pass') {
+                resultHtml = `<h3>👋 المسافر ${targetPlayer.name} عبر بسلام!</h3><p>الجمركي قرر عدم التفتيش.</p>`;
+            } else {
+                // تفتيش
+                const hand = targetPlayer.hand || [];
+                let illegalCount = 0;
+                let legalCount = 0;
+                let details = "";
                 
-                let isLie = false;
-                let bagValue = 0;
-                let penalty = 0;
-
-                bag.forEach(item => {
-                    const info = GOODS[item];
-                    bagValue += info.val;
-                    if(item !== declaredType || info.type === 'illegal') {
-                        isLie = true;
-                        if(info.type === 'illegal') penalty += info.penalty;
-                        else penalty += 10; // Simple penalty for wrong legal item
-                    }
-                });
-
-                let updates = {};
-                let resultMsg = "";
-                let resultEmoji = "";
-
-                if(action === 'pass') {
-                    // Smuggler gets full value
-                    updates[`jamarek/${roomId}/players/${pid}/score`] = (p.score || 0) + bagValue;
-                    updates[`jamarek/${roomId}/players/${pid}/status`] = 'passed';
-                    resultMsg = `${p.name} عبر بسلام!`;
-                    resultEmoji = "🤝";
-                } else {
-                    // Inspect
-                    if(isLie) {
-                        // Caught! Smuggler pays penalty, Sheriff gets penalty value
-                        updates[`jamarek/${roomId}/players/${pid}/score`] = (p.score || 0) - penalty;
-                        updates[`jamarek/${roomId}/players/${myId}/score`] = (p.score || 0) + penalty; // Sheriff bonus
-                        updates[`jamarek/${roomId}/players/${pid}/status`] = 'inspected_caught';
-                        resultMsg = `تم كشف ${p.name}! مهرب كذاب!`;
-                        resultEmoji = "🚨";
+                hand.forEach(item => {
+                    if (item.type === 'illegal') {
+                        illegalCount++;
+                        details += `<span style="color:red">🚫 ${item.name}</span> `;
                     } else {
-                        // Innocent! Sheriff pays penalty to Smuggler
-                        const compensation = 20; // Fixed compensation
-                        updates[`jamarek/${roomId}/players/${pid}/score`] = (p.score || 0) + bagValue + compensation;
-                        updates[`jamarek/${roomId}/players/${myId}/score`] = (p.score || 0) - compensation;
-                        updates[`jamarek/${roomId}/players/${pid}/status`] = 'inspected_clean';
-                        resultMsg = `${p.name} كان صادق! المفتش تورط.`;
-                        resultEmoji = "✅";
+                        legalCount++;
+                        details += `<span style="color:green">✅ ${item.name}</span> `;
                     }
-                }
-
-                updates[`jamarek/${roomId}/lastAction`] = {
-                    msg: resultMsg,
-                    emoji: resultEmoji,
-                    timestamp: Date.now()
-                };
-
-                db.ref().update(updates);
-            });
-        }
-
-        // --- TV Logic ---
-        function initTV() {
-            db.ref(`jamarek/${roomId}`).on('value', snap => {
-                const data = snap.val();
-                if(!data) return;
-
-                // Update Sheriff Name
-                if(data.players && data.sheriff) {
-                    document.getElementById('tv-sheriff-name').innerText = data.players[data.sheriff].name;
-                }
-
-                // Render Players Status
-                const grid = document.getElementById('tv-players-grid');
-                grid.innerHTML = '';
-                if(data.players) {
-                    Object.values(data.players).forEach(p => {
-                        let statusIcon = "🤔";
-                        if(p.status === 'ready') statusIcon = "💼";
-                        if(p.status === 'passed') statusIcon = "✅";
-                        if(p.status === 'inspected_caught') statusIcon = "🚫";
-                        if(p.status === 'inspected_clean') statusIcon = "😇";
-
-                        grid.innerHTML += `
-                        <div class="p-stat-card">
-                            <div style="color:#9ca3af;">${p.name}</div>
-                            <div style="font-size:2rem;">${statusIcon}</div>
-                            <div class="p-stat-score">${p.score || 0}</div>
-                        </div>`;
-                    });
-                }
-
-                // Show Action Result
-                if(data.lastAction && (Date.now() - data.lastAction.timestamp < 5000)) {
-                    const overlay = document.getElementById('overlay-result');
-                    document.getElementById('res-emoji').innerText = data.lastAction.emoji;
-                    document.getElementById('res-desc').innerText = data.lastAction.msg;
-                    overlay.style.display = 'flex';
-                    setTimeout(() => overlay.style.display = 'none', 4000);
-                }
-            });
-        }
-
-        function nextRound() {
-            // Logic to rotate sheriff and reset status
-            db.ref(`jamarek/${roomId}/players`).once('value', snap => {
-                const players = snap.val();
-                const ids = Object.keys(players);
-                // Rotate sheriff logic here or Random
-                const newSheriff = ids[Math.floor(Math.random() * ids.length)];
-                
-                let updates = {};
-                updates[`jamarek/${roomId}/sheriff`] = newSheriff;
-                ids.forEach(id => {
-                    const hand = [];
-                    for(let i=0; i<5; i++) hand.push(DECK[Math.floor(Math.random()*DECK.length)]);
-                    updates[`jamarek/${roomId}/players/${id}/hand`] = hand;
-                    updates[`jamarek/${roomId}/players/${id}/status`] = 'thinking';
-                    updates[`jamarek/${roomId}/players/${id}/bag`] = null;
-                    updates[`jamarek/${roomId}/players/${id}/declaration`] = null;
                 });
-                db.ref().update(updates);
-            });
+                
+                if (illegalCount > 0) {
+                    const fine = illegalCount * 10;
+                    updates['game/players/' + targetId + '/money'] = targetPlayer.money - fine;
+                    updates['game/players/' + myId + '/money'] = (window.myCurrentMoney || 50) + fine; // نحتاج قراءة مال الجمركي بدقة، لكن للتسهيل سنحدثه لاحقاً
+                    // طريقة أدق لتحديث مال الجمركي:
+                    get(ref(db, 'game/players/' + myId + '/money')).then(snap => {
+                        update(ref(db), { ['game/players/' + myId + '/money']: snap.val() + fine });
+                    });
+                    
+                    resultHtml = `<h3>🚨 تم كشف ممنوعات!</h3><p>المسافر ${targetPlayer.name} كان معه: ${details}</p><p>دفع غرامة ${fine} ريال للجمركي.</p>`;
+                } else {
+                    const comp = legalCount * 3;
+                    updates['game/players/' + targetId + '/money'] = targetPlayer.money + comp;
+                    get(ref(db, 'game/players/' + myId + '/money')).then(snap => {
+                        update(ref(db), { ['game/players/' + myId + '/money']: snap.val() - comp });
+                    });
+                    
+                    resultHtml = `<h3>✅ البضاعة سليمة!</h3><p>الجمركي تورط ودفع تعويض ${comp} ريال للمسافر ${targetPlayer.name}.</p>`;
+                }
+            }
+            
+            // تطبيق التحديثات وعرض النتيجة
+            updates['game/state'] = 'result';
+            updates['game/lastResultHtml'] = resultHtml;
+            update(ref(db), updates);
         }
 
-        function fullReset() {
-            db.ref(`jamarek/${roomId}`).update({ state: 'lobby' });
-        }
+        document.getElementById('nextRoundBtn').addEventListener('click', () => {
+            // إعادة ضبط الجولة
+            get(ref(db, 'game')).then(snap => {
+                const data = snap.val();
+                let updates = {};
+                updates['game/state'] = 'selecting';
+                updates['game/officerIndex'] = data.officerIndex + 1;
+                updates['game/lastResultHtml'] = "";
+                
+                // تصفير اختيارات اللاعبين
+                const players = data.players;
+                Object.keys(players).forEach(pid => {
+                    updates[`game/players/${pid}/hasSelected`] = false;
+                    updates[`game/players/${pid}/hand`] = [];
+                });
+                
+                update(ref(db), updates);
+                
+                // إعادة تصفير اختياري المحلي
+                mySelection = [];
+                document.getElementById('selection-count').innerText = "0";
+                document.getElementById('confirmSelectionBtn').disabled = true;
+                document.getElementById('goods-container').innerHTML = '';
+            });
+        });
 
     </script>
 </body>
