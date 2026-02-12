@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>خداع: جريمة غامضة 🕵️‍♂️</title>
+    <title>جمارك 👮‍♂️📦</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -11,243 +11,222 @@
 
     <style>
         :root {
-            --bg-dark: #0f172a;
-            --primary: #f43f5e; /* لون الجريمة (أحمر) */
-            --secondary: #3b82f6; /* لون الشرطة (أزرق) */
-            --accent: #10b981; /* لون الأدلة (أخضر) */
-            --gold: #fbbf24;
-            --text: #f1f5f9;
-            --glass: rgba(15, 23, 42, 0.7);
-            --border: 1px solid rgba(255,255,255,0.1);
+            --bg-dark: #111827;
+            --primary: #f59e0b; /* Gold for Sheriff */
+            --secondary: #10b981; /* Green for Success */
+            --danger: #ef4444; /* Red for Caught */
+            --card-bg: #1f2937;
+            --text: #f3f4f6;
         }
 
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; user-select: none; }
 
         body {
-            margin: 0; padding: 0;
-            font-family: 'Tajawal', sans-serif;
-            background-color: var(--bg-dark);
-            background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #020617 100%);
-            color: var(--text);
-            height: 100vh;
-            overflow: hidden;
+            margin: 0; padding: 0; font-family: 'Tajawal', sans-serif;
+            background: var(--bg-dark); color: var(--text);
+            height: 100vh; overflow: hidden;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background-image: radial-gradient(circle at 50% 50%, #374151 0%, #111827 100%);
         }
 
-        /* --- UI Elements --- */
-        .screen { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; position: absolute; top: 0; left: 0; overflow-y: auto; padding: 20px; }
+        .screen { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; position: absolute; top: 0; left: 0; overflow-y: auto; padding: 15px; }
         .active { display: flex; }
 
+        /* UI Elements */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
         .btn-main {
-            background: linear-gradient(135deg, var(--primary), #be123c);
-            color: white; border: none; padding: 15px 40px;
+            background: linear-gradient(135deg, var(--primary), #d97706);
+            color: black; border: none; padding: 15px 40px;
             font-size: 1.2rem; font-weight: 900; border-radius: 12px;
-            cursor: pointer; box-shadow: 0 4px 20px rgba(244, 63, 94, 0.4);
-            transition: 0.2s; width: 100%; max-width: 300px;
+            cursor: pointer; width: 100%; max-width: 300px;
+            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
+            transition: transform 0.1s;
         }
         .btn-main:active { transform: scale(0.98); }
 
-        .card-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%;
+        /* البطاقات (البضائع) */
+        .goods-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; margin-bottom: 20px; }
+        .good-card {
+            background: var(--card-bg); border: 2px solid #374151; border-radius: 10px;
+            padding: 10px; text-align: center; cursor: pointer; position: relative;
+            height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
-
-        /* بطاقات اللعب (أسلحة وأدلة) */
-        .game-card {
-            background: rgba(255,255,255,0.05); border: var(--border);
-            padding: 15px 5px; border-radius: 8px; text-align: center;
-            font-weight: bold; cursor: pointer; transition: 0.2s;
-            display: flex; flex-direction: column; justify-content: center;
-            min-height: 80px; position: relative;
-        }
-        .game-card.weapon { border-bottom: 3px solid var(--primary); }
-        .game-card.evidence { border-bottom: 3px solid var(--secondary); }
-        .game-card.selected { background: var(--primary); color: white; border-color: white; transform: scale(1.05); z-index: 10; }
-        .game-card small { font-size: 0.7rem; opacity: 0.7; margin-bottom: 5px; display: block; }
+        .good-card.selected { border-color: var(--primary); background: rgba(245, 158, 11, 0.1); transform: translateY(-5px); }
+        .good-icon { font-size: 2.5rem; margin-bottom: 5px; }
+        .good-name { font-size: 0.8rem; font-weight: bold; }
+        .good-val { font-size: 0.7rem; color: #9ca3af; }
+        .good-illegal { color: var(--danger); }
 
         /* --- 1. Landing --- */
         #scr-landing { justify-content: center; text-align: center; }
-        #scr-landing h1 { font-size: 4rem; margin-bottom: 10px; color: var(--primary); text-shadow: 0 0 30px var(--primary); }
-
-        /* --- 2. TV Screen --- */
-        #scr-tv { justify-content: flex-start; padding-top: 60px; }
-        .tv-header { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 60px; 
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
-            display: flex; justify-content: space-between; align-items: center; padding: 0 30px; z-index: 100; border-bottom: var(--border);
-        }
-        .phase-indicator { font-size: 1.5rem; font-weight: 900; color: var(--gold); }
+        #scr-landing h1 { font-size: 4rem; margin-bottom: 0; color: var(--primary); }
         
-        /* شبكة اللاعبين في التلفزيون */
-        .tv-players-container { 
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
-            gap: 15px; width: 100%; padding-bottom: 100px;
+        /* --- 2. TV Screen --- */
+        #scr-tv { padding-top: 20px; }
+        .tv-header {
+            width: 100%; display: flex; justify-content: space-between; align-items: center;
+            background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 15px; margin-bottom: 20px;
         }
-        .player-board {
-            background: rgba(255,255,255,0.03); border: var(--border);
-            border-radius: 12px; padding: 10px;
+        .sheriff-badge { font-size: 2rem; }
+        
+        .players-status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; width: 100%; }
+        .p-stat-card { background: #1f2937; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #374151; position: relative; overflow: hidden; }
+        .p-stat-score { font-size: 1.5rem; font-weight: 900; color: var(--primary); }
+        
+        /* Bag Reveal Animation Area */
+        #tv-action-area { 
+            margin-top: 30px; width: 100%; flex-grow: 1; display: flex; 
+            justify-content: center; align-items: center; flex-direction: column;
         }
-        .pb-name { font-weight: bold; color: var(--gold); margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        .pb-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-        .mini-card { 
-            font-size: 0.8rem; padding: 5px; background: rgba(0,0,0,0.3); 
-            border-radius: 4px; text-align: center; 
-        }
-        .mini-card.weapon { color: #fca5a5; }
-        .mini-card.evidence { color: #93c5fd; }
+        .bag-reveal { font-size: 8rem; animation: shake 0.5s infinite; }
+        @keyframes shake { 0% { transform: rotate(0deg); } 25% { transform: rotate(5deg); } 75% { transform: rotate(-5deg); } }
 
-        /* منطقة التلميحات (أسفل التلفزيون) */
-        .hints-bar {
-            position: fixed; bottom: 0; left: 0; width: 100%; height: 120px;
-            background: rgba(15, 23, 42, 0.95); border-top: 2px solid var(--gold);
-            display: flex; gap: 10px; padding: 10px; overflow-x: auto; align-items: center;
+        /* --- 3. Player Screen --- */
+        #scr-player { max-width: 600px; margin: 0 auto; }
+        .role-header { 
+            width: 100%; text-align: center; padding: 15px; margin-bottom: 20px; 
+            border-radius: 15px; background: rgba(0,0,0,0.3);
         }
-        .hint-tile {
-            min-width: 140px; height: 90px; background: #334155; border-radius: 8px;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            border: 1px solid #475569; color: #cbd5e1;
+        
+        /* Smuggler UI */
+        .declaration-box { 
+            background: #1f2937; padding: 20px; border-radius: 15px; width: 100%; 
+            text-align: center; display: none; border: 1px solid var(--primary);
         }
-        .hint-tile.active { background: var(--gold); color: black; border-color: white; transform: translateY(-10px); }
-        .hint-category { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }
-        .hint-value { font-weight: 900; font-size: 1.1rem; text-align: center; }
+        
+        /* Sheriff UI */
+        .inspection-list { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+        .inspect-row { 
+            background: #1f2937; padding: 15px; border-radius: 12px; 
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .inspect-actions button { margin-left: 5px; padding: 8px 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-pass { background: var(--secondary); color: white; }
+        .btn-inspect { background: var(--danger); color: white; }
 
-        /* --- Player/Forensic Interface --- */
-        #role-reveal-box {
-            background: white; color: black; padding: 30px; border-radius: 20px;
-            text-align: center; animation: popIn 0.5s; display: none;
-        }
-        .role-title { font-size: 2rem; font-weight: 900; color: var(--primary); margin: 10px 0; }
-        .role-desc { color: #666; margin-bottom: 20px; }
+        /* --- 4. Admin --- */
+        #scr-admin { padding: 20px; }
+        .admin-panel { background: #1f2937; padding: 20px; border-radius: 15px; width: 100%; }
 
-        /* Forensic Controls */
-        .tile-selector {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; width: 100%;
-        }
-        .tile-btn {
-            background: #334155; padding: 15px; border-radius: 10px; text-align: center; cursor: pointer;
-        }
-        .tile-btn.selected { background: var(--gold); color: black; font-weight: bold; }
-
-        /* Night Phase Overlay */
-        #night-overlay {
+        /* Alerts */
+        #overlay-result {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: black; z-index: 9999; display: none;
+            background: rgba(0,0,0,0.95); z-index: 9999; display: none;
             flex-direction: column; justify-content: center; align-items: center; text-align: center;
         }
-        #night-overlay h2 { color: #64748b; }
-
-        /* Accusation Modal */
-        #accusation-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 5000; display: none;
-            flex-direction: column; padding: 20px; overflow-y: auto;
-        }
-
-        /* Animations */
-        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(244, 63, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); } }
+        #res-emoji { font-size: 6rem; margin-bottom: 10px; }
+        #res-title { font-size: 3rem; margin: 0; font-weight: 900; }
+        #res-desc { font-size: 1.5rem; color: #ccc; }
 
     </style>
 </head>
 <body>
 
-    <div id="night-overlay">
-        <h1 style="font-size: 4rem;">🌑</h1>
-        <h2>الليل حل...</h2>
-        <p>أغمض عينيك وانتظر</p>
+    <div id="overlay-result">
+        <div id="res-emoji">👮‍♂️</div>
+        <div id="res-title">تم التفتيش!</div>
+        <div id="res-desc">...</div>
     </div>
 
     <div id="scr-landing" class="screen active">
-        <h1>🕵️‍♂️</h1>
-        <h1>خداع</h1>
-        <p>جريمة غامضة في هونغ كونغ</p>
-        <button class="btn-main" onclick="setupGame()">إنشاء غرفة جديدة</button>
+        <div style="font-size:5rem;">👮‍♂️📦</div>
+        <h1>جمارك</h1>
+        <p style="color:#9ca3af; margin-bottom:30px;">تحدي التهريب والتفتيش</p>
+        <button class="btn-main" onclick="setupGame()">إنشاء نقطة تفتيش 🚧</button>
     </div>
 
-    <div id="scr-lobby" class="screen">
-        <h2>الغرفة: <span id="room-code" style="color:var(--gold)">...</span></h2>
-        <div id="qr-area" style="background:white; padding:10px; border-radius:10px; margin:20px 0;"></div>
-        <h3>المحققون المتواجدون:</h3>
-        <div id="lobby-players" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;"></div>
-        
-        <div id="admin-start-btn" style="display:none; width:100%; margin-top:30px;">
-            <button class="btn-main" onclick="startGame()">بدء اللعبة (توزيع الأدوار)</button>
-        </div>
-        
-        <div id="player-join-form" style="width:100%; max-width:300px; display:none;">
-            <input type="text" id="p-name-input" placeholder="اسم المحقق" style="width:100%; padding:15px; border-radius:10px; border:none; text-align:center; margin-bottom:10px;">
-            <button class="btn-main" onclick="joinGame()">دخول</button>
+    <div id="scr-connect" class="screen">
+        <h2 style="color:var(--primary)">انضم للنقطة</h2>
+        <div style="background:white; padding:15px; border-radius:15px; margin:20px 0;" id="qr-box"></div>
+        <button class="btn-main" onclick="goTV()">فتح الشاشة 📺</button>
+        <div id="lobby-players-list" style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;"></div>
+        <div id="admin-controls-lobby" style="display:none; width:100%; margin-top:20px;">
+            <button class="btn-main" style="background:#10b981; color:white;" onclick="startGame()">بدء اللعب (توزيع الأدوار)</button>
         </div>
     </div>
 
     <div id="scr-tv" class="screen">
         <div class="tv-header">
-            <div class="phase-indicator" id="tv-phase-disp">انتظار...</div>
-            <div style="font-weight:bold;">المحققون: <span id="tv-p-count">0</span></div>
-        </div>
-
-        <div id="tv-players-grid" class="tv-players-container">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span class="sheriff-badge">👮‍♂️</span>
+                <div>
+                    <div style="font-size:0.8rem; color:#9ca3af;">المفتش الحالي</div>
+                    <div style="font-weight:bold; font-size:1.2rem;" id="tv-sheriff-name">...</div>
+                </div>
             </div>
-
-        <div id="tv-hints-bar" class="hints-bar">
-            <div class="hint-tile" style="opacity:0.5"><div class="hint-category">سبب الوفاة</div><div class="hint-value">؟</div></div>
-            <div class="hint-tile" style="opacity:0.5"><div class="hint-category">الموقع</div><div class="hint-value">؟</div></div>
-        </div>
-    </div>
-
-    <div id="scr-forensic" class="screen">
-        <h3 style="color:var(--gold); border-bottom:1px solid #333; width:100%; padding-bottom:10px;">👨‍⚕️ الطبيب الشرعي (أنت)</h3>
-        
-        <div style="background:#334155; padding:15px; border-radius:10px; margin-bottom:20px; border:1px solid var(--primary);">
-            <div style="font-size:0.8rem; color:#94a3b8;">الحل الصحيح (سري):</div>
-            <div style="font-weight:bold; color:var(--primary);">القاتل: <span id="adm-killer-name">...</span></div>
-            <div>🔫 <span id="adm-method">...</span> | 🧪 <span id="adm-evidence">...</span></div>
+            <div style="background:#374151; padding:5px 15px; border-radius:20px; font-weight:bold;" id="tv-phase">انتظار...</div>
         </div>
 
-        <div id="forensic-controls">
-            <h4>اختر تلميحاً للإرسال:</h4>
-            <div id="tile-selection-area" class="tile-selector"></div>
+        <div id="tv-players-grid" class="players-status-grid"></div>
+
+        <div id="tv-action-area">
+            <div style="font-size:2rem; color:#6b7280;">منطقة التفتيش</div>
         </div>
-        
-        <button class="btn-main" style="background:#333; margin-top:20px;" onclick="nextPhase()">نقل المرحلة (التالي)</button>
     </div>
 
     <div id="scr-player" class="screen">
-        <div id="role-reveal-box">
-            <div class="role-title" id="my-role-title">...</div>
-            <p class="role-desc" id="my-role-desc">...</p>
-            <button class="btn-main" onclick="document.getElementById('role-reveal-box').style.display='none';">فهمت</button>
+        <div id="login-form" style="text-align:center; width:100%; margin-top:50px;">
+            <h2>سجل دخولك يا مهرب 🕵️</h2>
+            <input type="text" id="p-name" placeholder="اسمك" style="width:100%; padding:15px; margin-bottom:15px; border-radius:10px; border:none; text-align:center;">
+            <button class="btn-main" onclick="joinGame()">دخول</button>
         </div>
 
-        <div id="p-game-area">
-            <h3 style="text-align:center;">أدواتك</h3>
-            <div class="card-grid" id="my-cards-grid"></div>
-            
-            <button id="btn-killer-confirm" class="btn-main" style="display:none; margin-top:20px; background:var(--primary);" onclick="killerSubmit()">تأكيد الجريمة 🩸</button>
-            <button id="btn-accuse" class="btn-main" style="display:none; margin-top:20px; background:var(--secondary);" onclick="openAccusation()">اعتراض / اتهام ✋</button>
+        <div id="game-interface" style="display:none; width:100%;">
+            <div class="role-header" id="role-display">
+                <div style="font-size:2rem;" id="role-icon">📦</div>
+                <h2 style="margin:5px 0;" id="role-text">أنت مهرب</h2>
+                <div style="font-size:0.9rem; color:var(--primary);">نقاطك: <span id="my-score">0</span></div>
+            </div>
+
+            <div id="smuggler-ui" style="display:none;">
+                <h3 style="margin-bottom:10px;">اختر بضاعتك (الشنطة)</h3>
+                <div class="goods-grid" id="my-hand"></div>
+                <button id="btn-prepare-bag" class="btn-main" onclick="showDeclaration()">تجهيز الشنطة 💼</button>
+
+                <div id="declaration-ui" class="declaration-box">
+                    <h3>ماذا يوجد في شنطتك؟</h3>
+                    <p style="color:#9ca3af; font-size:0.9rem;">(أخبر المفتش بما تريد، حتى لو كذب)</p>
+                    <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:20px;">
+                        <input type="number" id="decl-count" value="1" min="1" max="5" style="width:60px; padding:10px; text-align:center; border-radius:8px; border:none;">
+                        <select id="decl-type" style="padding:10px; border-radius:8px; border:none; width:150px;">
+                            <option value="apple">🍎 تفاح (حلال)</option>
+                            <option value="bread">🥖 خبز (حلال)</option>
+                            <option value="chicken">🍗 دجاج (حلال)</option>
+                        </select>
+                    </div>
+                    <button class="btn-main" onclick="submitBag()">تسليم الشنطة للمفتش 🚀</button>
+                    <button style="background:transparent; border:none; color:#9ca3af; margin-top:10px;" onclick="cancelDeclaration()">تراجع</button>
+                </div>
+                
+                <div id="waiting-msg" style="text-align:center; display:none; margin-top:20px;">
+                    <h3>💼 الشنطة عند المفتش...</h3>
+                    <p>يا رب تعدي...</p>
+                </div>
+            </div>
+
+            <div id="sheriff-ui" style="display:none;">
+                <h3>قائمة المشتبه بهم</h3>
+                <div id="inspection-list" class="inspection-list"></div>
+                <div id="no-suspects" style="text-align:center; color:#6b7280; margin-top:20px;">لا يوجد أحد جاهز للتفتيش بعد...</div>
+            </div>
         </div>
     </div>
 
-    <div id="accusation-modal">
-        <h2 style="color:white; text-align:center;">تقديم اتهام</h2>
-        <p style="color:#ccc; text-align:center;">تحذير: لديك فرصة واحدة فقط!</p>
-        
-        <label>المشتبه به:</label>
-        <select id="acc-suspect" style="width:100%; padding:15px; margin-bottom:10px; border-radius:8px;"></select>
-        
-        <label>سلاح الجريمة:</label>
-        <select id="acc-weapon" style="width:100%; padding:15px; margin-bottom:10px; border-radius:8px;"></select>
-        
-        <label>الدليل:</label>
-        <select id="acc-evidence" style="width:100%; padding:15px; margin-bottom:10px; border-radius:8px;"></select>
-        
-        <div style="display:flex; gap:10px; margin-top:20px;">
-            <button class="btn-main" onclick="submitAccusation()">إرسال الاتهام</button>
-            <button class="btn-main" style="background:#333;" onclick="document.getElementById('accusation-modal').style.display='none'">إلغاء</button>
+    <div id="scr-admin" class="screen">
+        <div class="admin-panel">
+            <h2>التحكم</h2>
+            <button class="btn-main" style="margin-bottom:10px;" onclick="nextRound()">جولة جديدة / تغيير المفتش</button>
+            <button class="btn-main" style="background:#ef4444;" onclick="fullReset()">تصفير اللعبة</button>
         </div>
     </div>
 
     <script>
-        // --- Database Config ---
+        // --- Firebase Config ---
         const firebaseConfig = {
             apiKey: "AIzaSyDh4v9gRCICA_XRCJXsDpbtCySYAoFsfhk",
             authDomain: "bagera-word.firebaseapp.com",
@@ -260,50 +239,53 @@
         try { if(firebase.apps.length === 0) firebase.initializeApp(firebaseConfig); else firebase.app(); } catch(e) {}
         const db = firebase.database();
 
-        // --- Data Lists (Hundreds of cards) ---
-        const WEAPONS = ["سم", "خنجر", "مسدس", "حبل", "وسادة", "مطرقة", "كهرباء", "غرق", "سيارة", "نار", "غاز", "متفجرات", "منشار", "حقنة", "صخرة", "فأس", "سيف", "تدافع", "عضة حيوان", "إشعاع"];
-        const EVIDENCE = ["بصمة", "شعر", "دم", "زر قميص", "تذكرة", "هاتف", "ساعة", "خاتم", "رسالة", "عطر", "تراب", "مفتاح", "نظارة", "قفاز", "كاميرا", "USB", "كوب", "عقب سيجارة", "فاتورة", "أحمر شفاه"];
-        
-        // Tiles for Forensic Scientist
-        const TILES = {
-            cause: ["نزيف", "اختناق", "تسمم", "حروق", "صدمة قوية"],
-            location: ["غابة", "منزل", "مدرسة", "مستشفى", "شارع", "حديقة", "بحر"],
-            trace: ["كدمة", "جرح", "آثار سحب", "لا يوجد"],
-            state: ["ملابس ممزقة", "مبتل", "مغطى بالتراب", "نظيف"],
-            time: ["فجر", "ظهر", "ليل", "غروب"]
+        // --- Game Data ---
+        const GOODS = {
+            apple: { name: "تفاح", icon: "🍎", val: 10, type: "legal" },
+            bread: { name: "خبز", icon: "🥖", val: 10, type: "legal" },
+            chicken: { name: "دجاج", icon: "🍗", val: 20, type: "legal" },
+            diamond: { name: "الماسة", icon: "💎", val: 60, type: "illegal", penalty: 30 },
+            gun: { name: "سلاح", icon: "🔫", val: 80, type: "illegal", penalty: 40 }
         };
+        const DECK = ['apple','apple','apple','bread','bread','chicken','chicken','diamond','gun','apple','bread'];
 
-        // --- Global Vars ---
         let roomId = new URLSearchParams(window.location.search).get('room');
-        let myRole = 'player'; // or 'admin'
-        let myId = localStorage.getItem('deception_uid') || Date.now().toString();
-        localStorage.setItem('deception_uid', myId);
-        let myName = '';
-        let myGameRole = ''; // Killer, Detective, etc.
-        let localPlayerCards = { w: [], e: [] };
-        let killerSelection = { w: null, e: null };
+        let myId = localStorage.getItem('jamarek_uid') || Date.now().toString();
+        localStorage.setItem('jamarek_uid', myId);
+        let myRole = ''; // 'sheriff' or 'smuggler'
+        let myHand = [];
+        let selectedCards = [];
 
-        // --- Initialization ---
+        // --- Init ---
         window.onload = function() {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            const mode = new URLSearchParams(window.location.search).get('mode');
             
-            // Check Mode
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('mode') === 'tv') {
+            if(mode === 'tv') {
                 document.getElementById('scr-tv').classList.add('active');
                 initTV();
-            } else if (roomId) {
-                // Check if admin or player
-                db.ref(`deception/${roomId}`).once('value', snap => {
-                    const data = snap.val();
-                    if(data && data.forensicId === myId) {
-                        myRole = 'admin';
-                        initForensic();
+            } else if(roomId) {
+                // Check if admin
+                db.ref(`jamarek/${roomId}`).once('value', snap => {
+                    if(snap.exists()) {
+                        // Check if I am already registered
+                        if(localStorage.getItem('jamarek_joined_' + roomId)) {
+                            document.getElementById('scr-player').classList.add('active');
+                            document.getElementById('login-form').style.display = 'none';
+                            document.getElementById('game-interface').style.display = 'block';
+                            initPlayer();
+                        } else {
+                            document.getElementById('scr-player').classList.add('active');
+                        }
+                        
+                        // Show admin controls if creator
+                        if(snap.val().creator === myId) {
+                            // Can add special admin button here if needed
+                        }
                     } else {
-                        document.getElementById('scr-lobby').classList.add('active');
-                        document.getElementById('room-code').innerText = roomId;
-                        document.getElementById('player-join-form').style.display = 'block';
-                        initLobbyListener();
+                        // Room doesn't exist or just created
+                        document.getElementById('scr-connect').classList.add('active');
+                        initLobby();
                     }
                 });
             } else {
@@ -311,310 +293,339 @@
             }
         };
 
-        // --- Setup & Lobby ---
+        // --- Core ---
         function setupGame() {
             roomId = Math.random().toString(36).substr(2, 6).toUpperCase();
-            db.ref(`deception/${roomId}`).set({
+            db.ref(`jamarek/${roomId}`).set({
                 state: 'lobby',
-                forensicId: myId,
-                phase: 0
+                creator: myId,
+                round: 1
             }).then(() => {
-                window.location.href = `?room=${roomId}`;
+                window.location.href = `?room=${roomId}&role=admin`;
             });
         }
 
-        function joinGame() {
-            const n = document.getElementById('p-name-input').value.trim();
-            if(!n) return alert("اكتب اسمك");
-            myName = n;
-            
-            // Generate Cards
-            const myWeapons = [];
-            const myEvidence = [];
-            for(let i=0; i<4; i++) myWeapons.push(WEAPONS[Math.floor(Math.random()*WEAPONS.length)]);
-            for(let i=0; i<4; i++) myEvidence.push(EVIDENCE[Math.floor(Math.random()*EVIDENCE.length)]);
-
-            db.ref(`deception/${roomId}/players/${myId}`).set({
-                name: n,
-                role: 'detective', // Default
-                cards: { w: myWeapons, e: myEvidence },
-                isAlive: true
-            }).then(() => {
-                initPlayerScreen();
-            });
+        function goTV() {
+            window.open(`?room=${roomId}&mode=tv`, '_blank');
         }
 
-        function initLobbyListener() {
-            // Generate QR Code
-            const base = window.location.href.split('?')[0];
-            const url = `${base}?room=${roomId}`;
-            document.getElementById('qr-area').innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}" style="width:100%">`;
+        // --- Lobby ---
+        function initLobby() {
+            const url = window.location.href.split('?')[0] + `?room=${roomId}`;
+            document.getElementById('qr-box').innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(url)}" style="width:100%">`;
+            document.getElementById('admin-controls-lobby').style.display = 'block';
 
-            db.ref(`deception/${roomId}/players`).on('value', snap => {
-                const list = document.getElementById('lobby-players');
-                list.innerHTML = '';
+            db.ref(`jamarek/${roomId}/players`).on('value', snap => {
+                const div = document.getElementById('lobby-players-list');
+                div.innerHTML = '';
                 if(snap.val()) {
                     Object.values(snap.val()).forEach(p => {
-                        list.innerHTML += `<div style="background:#333; padding:5px 10px; border-radius:5px;">${p.name}</div>`;
+                        div.innerHTML += `<div style="background:#374151; padding:5px 15px; border-radius:20px;">${p.name}</div>`;
                     });
-                }
-            });
-        }
-
-        // --- Game Flow Control (Admin/Forensic) ---
-        function initForensic() {
-            document.getElementById('scr-forensic').classList.add('active');
-            // Listen for game state
-            db.ref(`deception/${roomId}`).on('value', snap => {
-                const data = snap.val();
-                if(!data) return;
-                
-                // Show admin specific views based on state
-                if(data.state === 'lobby') {
-                    // Show Lobby Controls
-                    document.getElementById('scr-lobby').classList.add('active');
-                    document.getElementById('scr-forensic').classList.remove('active');
-                    document.getElementById('room-code').innerText = roomId;
-                    document.getElementById('admin-start-btn').style.display = 'block';
-                    initLobbyListener();
-                } else {
-                    document.getElementById('scr-lobby').classList.remove('active');
-                    document.getElementById('scr-forensic').classList.add('active');
-                    
-                    // Update Forensic Dashboard
-                    if(data.crime) {
-                        document.getElementById('adm-killer-name').innerText = data.players[data.crime.killerId].name;
-                        document.getElementById('adm-method').innerText = data.crime.method;
-                        document.getElementById('adm-evidence').innerText = data.crime.evidence;
-                    }
-                    
-                    renderTileSelector();
                 }
             });
         }
 
         function startGame() {
-            db.ref(`deception/${roomId}/players`).once('value', snap => {
+            // Assign Sheriff (Random)
+            db.ref(`jamarek/${roomId}/players`).once('value', snap => {
                 const players = snap.val();
+                if(!players) return;
                 const ids = Object.keys(players);
-                if(ids.length < 2) return alert("لازم 3 لاعبين على الأقل (مع الطبيب)");
-
-                // Assign Roles (1 Killer, rest Detectives for MVP)
-                // In full version: add Accomplice/Witness based on count
-                const killerIndex = Math.floor(Math.random() * ids.length);
-                const killerId = ids[killerIndex];
+                const sheriffId = ids[Math.floor(Math.random() * ids.length)];
                 
-                db.ref(`deception/${roomId}/players/${killerId}/role`).set('killer');
+                let updates = {};
+                updates[`jamarek/${roomId}/state`] = 'playing';
+                updates[`jamarek/${roomId}/sheriff`] = sheriffId;
                 
-                // Start Night Phase
-                db.ref(`deception/${roomId}`).update({
-                    state: 'night_killer',
-                    phase: 1
+                // Reset hands
+                ids.forEach(id => {
+                    const hand = [];
+                    for(let i=0; i<5; i++) hand.push(DECK[Math.floor(Math.random()*DECK.length)]);
+                    updates[`jamarek/${roomId}/players/${id}/hand`] = hand;
+                    updates[`jamarek/${roomId}/players/${id}/status`] = 'thinking'; // thinking, ready, passed, inspected
+                    updates[`jamarek/${roomId}/players/${id}/bag`] = null;
                 });
+
+                db.ref().update(updates);
+                document.getElementById('scr-connect').classList.remove('active');
+                // Redirect admin to player screen if they are playing
+                document.getElementById('scr-player').classList.add('active');
+                initPlayer();
             });
         }
 
-        function renderTileSelector() {
-            const area = document.getElementById('tile-selection-area');
-            area.innerHTML = '';
+        // --- Player ---
+        function joinGame() {
+            const name = document.getElementById('p-name').value;
+            if(!name) return;
             
-            // Example: Show Cause of Death tiles
-            const cats = Object.keys(TILES);
-            cats.forEach(cat => {
-                area.innerHTML += `<div class="tile-btn" onclick="sendHint('${cat}')">تلميح: ${cat}</div>`;
+            db.ref(`jamarek/${roomId}/players/${myId}`).set({
+                name: name,
+                score: 0
+            }).then(() => {
+                localStorage.setItem('jamarek_joined_' + roomId, 'true');
+                document.getElementById('login-form').style.display = 'none';
+                document.getElementById('game-interface').style.display = 'block';
+                initPlayer();
             });
         }
 
-        function sendHint(cat) {
-            const val = prompt(`اختر قيمة لـ ${cat}: \n` + TILES[cat].join(' - '));
-            if(val && TILES[cat].includes(val)) {
-                db.ref(`deception/${roomId}/hints`).push({ cat: cat, val: val });
-            } else {
-                alert("قيمة غير صحيحة، اختر من القائمة");
-            }
-        }
-
-        function nextPhase() {
-            // Simple phase switching logic
-            db.ref(`deception/${roomId}/state`).once('value', snap => {
-                const s = snap.val();
-                if(s === 'night_killer') db.ref(`deception/${roomId}`).update({ state: 'day' });
-            });
-        }
-
-        // --- Player Logic ---
-        function initPlayerScreen() {
-            document.getElementById('scr-lobby').classList.remove('active');
-            document.getElementById('scr-player').classList.add('active');
-
-            db.ref(`deception/${roomId}`).on('value', snap => {
+        function initPlayer() {
+            db.ref(`jamarek/${roomId}`).on('value', snap => {
                 const data = snap.val();
                 if(!data) return;
-                
-                // My Player Data
+
                 const me = data.players[myId];
-                myGameRole = me.role;
-                localPlayerCards = me.cards;
+                if(!me) return; // Kicked or error
 
-                // Handle Night Overlay
-                const overlay = document.getElementById('night-overlay');
-                if(data.state.startsWith('night')) {
-                    if(data.state === 'night_killer' && myGameRole === 'killer') {
-                        overlay.style.display = 'none'; // Killer wakes up
-                        document.getElementById('btn-killer-confirm').style.display = 'block';
-                    } else {
-                        overlay.style.display = 'flex'; // Sleep
-                    }
+                document.getElementById('my-score').innerText = me.score || 0;
+
+                // Determine Role
+                if(data.sheriff === myId) {
+                    myRole = 'sheriff';
+                    document.getElementById('role-icon').innerText = '👮‍♂️';
+                    document.getElementById('role-text').innerText = 'أنت المفتش';
+                    document.getElementById('smuggler-ui').style.display = 'none';
+                    document.getElementById('sheriff-ui').style.display = 'block';
+                    renderSheriffView(data.players);
                 } else {
-                    overlay.style.display = 'none'; // Day
-                    if(myGameRole !== 'killer') document.getElementById('btn-accuse').style.display = 'block';
-                }
-
-                // Render Cards
-                renderMyCards();
-                
-                // Show Role (One time)
-                if(!window.roleSeen) {
-                    document.getElementById('role-reveal-box').style.display = 'block';
-                    document.getElementById('my-role-title').innerText = (myGameRole === 'killer') ? 'أنت القاتل 🔪' : 'أنت محقق 🕵️‍♂️';
-                    document.getElementById('my-role-desc').innerText = (myGameRole === 'killer') ? 'اختر سلاحاً ودليلاً في الليل.' : 'اعثر على القاتل قبل فوات الأوان.';
-                    window.roleSeen = true;
+                    myRole = 'smuggler';
+                    document.getElementById('role-icon').innerText = '🧳';
+                    document.getElementById('role-text').innerText = 'أنت مهرب';
+                    document.getElementById('sheriff-ui').style.display = 'none';
+                    document.getElementById('smuggler-ui').style.display = 'block';
+                    
+                    if(me.status === 'ready') {
+                        document.getElementById('waiting-msg').style.display = 'block';
+                        document.getElementById('my-hand').style.display = 'none';
+                        document.getElementById('btn-prepare-bag').style.display = 'none';
+                    } else if (me.status === 'thinking') {
+                        document.getElementById('waiting-msg').style.display = 'none';
+                        document.getElementById('my-hand').style.display = 'grid';
+                        document.getElementById('btn-prepare-bag').style.display = 'block';
+                        myHand = me.hand || [];
+                        renderHand();
+                    }
                 }
             });
         }
 
-        function renderMyCards() {
-            const grid = document.getElementById('my-cards-grid');
+        function renderHand() {
+            const grid = document.getElementById('my-hand');
+            if(grid.innerHTML && selectedCards.length > 0) return; // Don't redraw if selecting
             grid.innerHTML = '';
             
-            // Weapons
-            localPlayerCards.w.forEach(c => {
-                grid.innerHTML += `<div class="game-card weapon" onclick="selectCard(this, 'w', '${c}')"><small>سلاح</small>${c}</div>`;
-            });
-            // Evidence
-            localPlayerCards.e.forEach(c => {
-                grid.innerHTML += `<div class="game-card evidence" onclick="selectCard(this, 'e', '${c}')"><small>دليل</small>${c}</div>`;
+            myHand.forEach((item, idx) => {
+                const info = GOODS[item];
+                grid.innerHTML += `
+                <div class="good-card ${info.type === 'illegal' ? 'good-illegal' : ''}" onclick="toggleCard(this, '${item}', ${idx})">
+                    <div class="good-icon">${info.icon}</div>
+                    <div class="good-name">${info.name}</div>
+                    <div class="good-val">${info.val}ن</div>
+                </div>`;
             });
         }
 
-        function selectCard(el, type, val) {
-            // Only Killer selects in Night
-            if(myGameRole !== 'killer') return;
-            
-            // Highlight logic
-            if(type === 'w') {
-                document.querySelectorAll('.game-card.weapon').forEach(x => x.classList.remove('selected'));
-                killerSelection.w = val;
+        function toggleCard(el, item, idx) {
+            if(el.classList.contains('selected')) {
+                el.classList.remove('selected');
+                selectedCards = selectedCards.filter(c => c.idx !== idx);
             } else {
-                document.querySelectorAll('.game-card.evidence').forEach(x => x.classList.remove('selected'));
-                killerSelection.e = val;
+                if(selectedCards.length >= 5) return alert("الشنطة مليانة!");
+                el.classList.add('selected');
+                selectedCards.push({item, idx});
             }
-            el.classList.add('selected');
         }
 
-        function killerSubmit() {
-            if(!killerSelection.w || !killerSelection.e) return alert("اختر سلاح ودليل!");
-            db.ref(`deception/${roomId}/crime`).set({
-                killerId: myId,
-                method: killerSelection.w,
-                evidence: killerSelection.e
+        function showDeclaration() {
+            if(selectedCards.length === 0) return alert("اختر بضاعة أولاً!");
+            document.getElementById('my-hand').style.display = 'none';
+            document.getElementById('btn-prepare-bag').style.display = 'none';
+            document.getElementById('declaration-ui').style.display = 'block';
+            document.getElementById('decl-count').value = selectedCards.length;
+        }
+
+        function cancelDeclaration() {
+            document.getElementById('declaration-ui').style.display = 'none';
+            document.getElementById('my-hand').style.display = 'grid';
+            document.getElementById('btn-prepare-bag').style.display = 'block';
+        }
+
+        function submitBag() {
+            const count = document.getElementById('decl-count').value;
+            const type = document.getElementById('decl-type').value;
+            const declaration = `${count} ${GOODS[type].name}`;
+            
+            const bagItems = selectedCards.map(c => c.item);
+
+            db.ref(`jamarek/${roomId}/players/${myId}`).update({
+                bag: bagItems,
+                declaration: declaration,
+                declaredType: type, // Store what they claimed it is
+                status: 'ready'
             });
-            document.getElementById('btn-killer-confirm').style.display = 'none';
-            alert("تم تنفيذ الجريمة... عد للنوم 🌑");
+
+            document.getElementById('declaration-ui').style.display = 'none';
+            selectedCards = [];
+        }
+
+        // --- Sheriff Logic ---
+        function renderSheriffView(players) {
+            const list = document.getElementById('inspection-list');
+            list.innerHTML = '';
+            let hasSuspects = false;
+
+            Object.keys(players).forEach(pid => {
+                if(pid === myId) return; // Don't inspect self
+                const p = players[pid];
+                
+                if(p.status === 'ready') {
+                    hasSuspects = true;
+                    list.innerHTML += `
+                    <div class="inspect-row">
+                        <div>
+                            <div style="font-weight:bold; color:var(--primary);">${p.name}</div>
+                            <div style="font-size:0.9rem;">يقول: "معي ${p.declaration}"</div>
+                        </div>
+                        <div class="inspect-actions">
+                            <button class="btn-pass" onclick="decide('${pid}', 'pass')">🤝 تمشية</button>
+                            <button class="btn-inspect" onclick="decide('${pid}', 'inspect')">🔍 تفتيش</button>
+                        </div>
+                    </div>`;
+                }
+            });
+
+            document.getElementById('no-suspects').style.display = hasSuspects ? 'none' : 'block';
+        }
+
+        function decide(pid, action) {
+            // Logic handled by Sheriff client for now (secure enough for MVP)
+            db.ref(`jamarek/${roomId}/players/${pid}`).once('value', snap => {
+                const p = snap.val();
+                const bag = p.bag;
+                const declaredType = p.declaredType;
+                
+                let isLie = false;
+                let bagValue = 0;
+                let penalty = 0;
+
+                bag.forEach(item => {
+                    const info = GOODS[item];
+                    bagValue += info.val;
+                    if(item !== declaredType || info.type === 'illegal') {
+                        isLie = true;
+                        if(info.type === 'illegal') penalty += info.penalty;
+                        else penalty += 10; // Simple penalty for wrong legal item
+                    }
+                });
+
+                let updates = {};
+                let resultMsg = "";
+                let resultEmoji = "";
+
+                if(action === 'pass') {
+                    // Smuggler gets full value
+                    updates[`jamarek/${roomId}/players/${pid}/score`] = (p.score || 0) + bagValue;
+                    updates[`jamarek/${roomId}/players/${pid}/status`] = 'passed';
+                    resultMsg = `${p.name} عبر بسلام!`;
+                    resultEmoji = "🤝";
+                } else {
+                    // Inspect
+                    if(isLie) {
+                        // Caught! Smuggler pays penalty, Sheriff gets penalty value
+                        updates[`jamarek/${roomId}/players/${pid}/score`] = (p.score || 0) - penalty;
+                        updates[`jamarek/${roomId}/players/${myId}/score`] = (p.score || 0) + penalty; // Sheriff bonus
+                        updates[`jamarek/${roomId}/players/${pid}/status`] = 'inspected_caught';
+                        resultMsg = `تم كشف ${p.name}! مهرب كذاب!`;
+                        resultEmoji = "🚨";
+                    } else {
+                        // Innocent! Sheriff pays penalty to Smuggler
+                        const compensation = 20; // Fixed compensation
+                        updates[`jamarek/${roomId}/players/${pid}/score`] = (p.score || 0) + bagValue + compensation;
+                        updates[`jamarek/${roomId}/players/${myId}/score`] = (p.score || 0) - compensation;
+                        updates[`jamarek/${roomId}/players/${pid}/status`] = 'inspected_clean';
+                        resultMsg = `${p.name} كان صادق! المفتش تورط.`;
+                        resultEmoji = "✅";
+                    }
+                }
+
+                updates[`jamarek/${roomId}/lastAction`] = {
+                    msg: resultMsg,
+                    emoji: resultEmoji,
+                    timestamp: Date.now()
+                };
+
+                db.ref().update(updates);
+            });
         }
 
         // --- TV Logic ---
         function initTV() {
-            // Generate QR for joining
-            const base = window.location.href.split('?')[0];
-            console.log("TV Initialized for Room: " + roomId);
-            
-            db.ref(`deception/${roomId}`).on('value', snap => {
+            db.ref(`jamarek/${roomId}`).on('value', snap => {
                 const data = snap.val();
                 if(!data) return;
 
-                // Update Phase
-                const phaseDisp = document.getElementById('tv-phase-disp');
-                if(data.state === 'lobby') phaseDisp.innerText = "اللوبي - انتظار اللاعبين";
-                else if(data.state.startsWith('night')) phaseDisp.innerText = "🌑 الليل - الجريمة تقع الآن";
-                else phaseDisp.innerText = "☀️ النهار - التحقيق";
+                // Update Sheriff Name
+                if(data.players && data.sheriff) {
+                    document.getElementById('tv-sheriff-name').innerText = data.players[data.sheriff].name;
+                }
 
-                // Render Players & Cards
+                // Render Players Status
                 const grid = document.getElementById('tv-players-grid');
                 grid.innerHTML = '';
                 if(data.players) {
-                    document.getElementById('tv-p-count').innerText = Object.keys(data.players).length;
-                    
                     Object.values(data.players).forEach(p => {
-                        let cardsHtml = '';
-                        p.cards.w.forEach(c => cardsHtml += `<div class="mini-card weapon">${c}</div>`);
-                        p.cards.e.forEach(c => cardsHtml += `<div class="mini-card evidence">${c}</div>`);
-                        
+                        let statusIcon = "🤔";
+                        if(p.status === 'ready') statusIcon = "💼";
+                        if(p.status === 'passed') statusIcon = "✅";
+                        if(p.status === 'inspected_caught') statusIcon = "🚫";
+                        if(p.status === 'inspected_clean') statusIcon = "😇";
+
                         grid.innerHTML += `
-                        <div class="player-board">
-                            <div class="pb-name">${p.name}</div>
-                            <div class="pb-cards">${cardsHtml}</div>
+                        <div class="p-stat-card">
+                            <div style="color:#9ca3af;">${p.name}</div>
+                            <div style="font-size:2rem;">${statusIcon}</div>
+                            <div class="p-stat-score">${p.score || 0}</div>
                         </div>`;
                     });
                 }
 
-                // Render Hints
-                const hintsBar = document.getElementById('tv-hints-bar');
-                if(data.hints) {
-                    hintsBar.innerHTML = '';
-                    Object.values(data.hints).forEach(h => {
-                        hintsBar.innerHTML += `<div class="hint-tile active"><div class="hint-category">${h.cat}</div><div class="hint-value">${h.val}</div></div>`;
-                    });
+                // Show Action Result
+                if(data.lastAction && (Date.now() - data.lastAction.timestamp < 5000)) {
+                    const overlay = document.getElementById('overlay-result');
+                    document.getElementById('res-emoji').innerText = data.lastAction.emoji;
+                    document.getElementById('res-desc').innerText = data.lastAction.msg;
+                    overlay.style.display = 'flex';
+                    setTimeout(() => overlay.style.display = 'none', 4000);
                 }
             });
         }
 
-        // --- Accusation Logic ---
-        function openAccusation() {
-            const modal = document.getElementById('accusation-modal');
-            const sSuspect = document.getElementById('acc-suspect');
-            const sWeapon = document.getElementById('acc-weapon');
-            const sEvidence = document.getElementById('acc-evidence');
-            
-            // Populate lists from DB data (simplified for brevity)
-            // In real logic: fetch all players, flat map cards
-            // Here assuming player has cached data or fetch once
-            db.ref(`deception/${roomId}/players`).once('value', snap => {
-                const ps = snap.val();
-                sSuspect.innerHTML = ''; sWeapon.innerHTML = ''; sEvidence.innerHTML = '';
+        function nextRound() {
+            // Logic to rotate sheriff and reset status
+            db.ref(`jamarek/${roomId}/players`).once('value', snap => {
+                const players = snap.val();
+                const ids = Object.keys(players);
+                // Rotate sheriff logic here or Random
+                const newSheriff = ids[Math.floor(Math.random() * ids.length)];
                 
-                Object.keys(ps).forEach(pid => {
-                    const p = ps[pid];
-                    sSuspect.innerHTML += `<option value="${pid}">${p.name}</option>`;
-                    p.cards.w.forEach(c => sWeapon.innerHTML += `<option>${c}</option>`);
-                    p.cards.e.forEach(c => sEvidence.innerHTML += `<option>${c}</option>`);
+                let updates = {};
+                updates[`jamarek/${roomId}/sheriff`] = newSheriff;
+                ids.forEach(id => {
+                    const hand = [];
+                    for(let i=0; i<5; i++) hand.push(DECK[Math.floor(Math.random()*DECK.length)]);
+                    updates[`jamarek/${roomId}/players/${id}/hand`] = hand;
+                    updates[`jamarek/${roomId}/players/${id}/status`] = 'thinking';
+                    updates[`jamarek/${roomId}/players/${id}/bag`] = null;
+                    updates[`jamarek/${roomId}/players/${id}/declaration`] = null;
                 });
-                modal.style.display = 'flex';
+                db.ref().update(updates);
             });
         }
 
-        function submitAccusation() {
-            const suspectId = document.getElementById('acc-suspect').value;
-            const w = document.getElementById('acc-weapon').value;
-            const e = document.getElementById('acc-evidence').value;
-            
-            db.ref(`deception/${roomId}/crime`).once('value', snap => {
-                const crime = snap.val();
-                if(crime.killerId === suspectId && crime.method === w && crime.evidence === e) {
-                    alert("🎉 إجابة صحيحة! تم القبض على القاتل!");
-                    db.ref(`deception/${roomId}`).update({ state: 'hunt_witness' });
-                } else {
-                    alert("❌ اتهام خاطئ! لقد خسرت شارتك.");
-                    // Remove ability to accuse again (Local & DB)
-                    document.getElementById('accusation-modal').style.display = 'none';
-                    document.getElementById('btn-accuse').remove();
-                }
-            });
-        }
-
-        // Utility to allow TV mode opening
-        function goTV() {
-            window.location.href = `?room=${roomId}&mode=tv`;
+        function fullReset() {
+            db.ref(`jamarek/${roomId}`).update({ state: 'lobby' });
         }
 
     </script>
