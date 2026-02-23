@@ -19,11 +19,11 @@
             --danger: #ef4444; 
             --success: #10b981;
             --text-light: #f8fafc;
+            --bg-dark: rgba(15, 23, 42, 0.65); 
         }
 
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
 
-        /* تعديل الخلفية لتكون تدرج لوني كحلي أثناء اللعب داخل الموقع */
         body {
             margin: 0; padding: 0;
             font-family: 'Tajawal', sans-serif;
@@ -31,17 +31,66 @@
             height: 100vh;
             overflow: hidden;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+            background-color: #0f172a;
+            background-image: url('jmarek.png'); 
+            background-size: cover;
+            background-position: center;
+        }
+
+        body::before {
+            content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
+            background: var(--bg-dark); z-index: -1;
         }
 
         .screen { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: flex-start; position: absolute; top: 0; left: 0; overflow-y: auto; padding: 20px; z-index: 10; }
         .active { display: flex; }
 
         .glass-panel {
-            background: rgba(0, 0, 0, 0.5); 
+            background: rgba(0, 0, 0, 0.6); 
             backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.5);
             padding: 20px; width: 100%; max-width: 600px; text-align: center;
+        }
+
+        /* تنسيق جديد لعنوان اللعبة في البداية */
+        .title-banner {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(8px);
+            border-top: 3px solid var(--accent);
+            border-bottom: 3px solid var(--accent);
+            padding: 20px 50px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            margin-top: 50px;
+        }
+
+        .title-banner h1 {
+            font-size: 4.5rem;
+            margin: 0;
+            color: var(--gold);
+            text-shadow: 2px 2px 5px rgba(0,0,0,1);
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+
+        /* أزرار اختيار النمط */
+        .mode-container {
+            position: absolute; top: 20px; right: 20px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            padding: 10px; border-radius: 15px;
+            display: flex; gap: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .mode-btn {
+            background: transparent; border: 2px solid transparent;
+            color: white; padding: 8px 15px; border-radius: 10px;
+            font-family: 'Tajawal'; font-weight: bold; cursor: pointer; transition: 0.3s;
+        }
+        .mode-btn.active-mode {
+            background: var(--primary);
+            border-color: var(--secondary);
+            box-shadow: 0 0 10px var(--secondary);
         }
 
         .btn {
@@ -69,16 +118,16 @@
         .goods-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; margin-top: 15px; }
         .good-item { 
             background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 12px; padding: 15px 5px; font-weight: bold; 
+            border-radius: 12px; padding: 15px 5px; font-weight: bold; cursor: pointer;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            animation: slideUp 0.4s ease-out forwards; opacity: 0; transform: translateY(20px);
+            transition: 0.2s;
         }
-        
-        @keyframes slideUp {
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .good-item-anim { animation: slideUp 0.4s ease-out forwards; opacity: 0; transform: translateY(20px); }
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
 
+        .good-item.selected { background: var(--primary); border-color: white; transform: scale(0.95); }
         .good-item.illegal { border-color: rgba(239, 68, 68, 0.8); background: rgba(239, 68, 68, 0.2); }
+        .good-item.illegal.selected { background: var(--danger); border-color: white; }
         
         .pts-badge { font-size: 0.8rem; background: rgba(0,0,0,0.7); padding: 2px 8px; border-radius: 10px; margin-top: 5px; color:var(--gold);}
 
@@ -91,11 +140,9 @@
         .tag-passed { background: var(--success); }
         .tag-inspected { background: var(--primary); }
 
-        /* Modal for results and QR */
-        #result-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; justify-content:center; align-items:center; flex-direction: column; text-align: center; padding: 20px;}
+        /* Modal */
+        #result-modal, #tv-qr-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; justify-content:center; align-items:center; flex-direction: column; text-align: center; padding: 20px;}
         .result-content { background: #1e293b; padding: 30px; border-radius: 20px; border: 2px solid var(--gold); max-width: 500px; width: 100%; }
-
-        #tv-qr-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; justify-content:center; align-items:center; flex-direction: column; text-align: center; padding: 20px;}
         .qr-modal-content { background: #1e293b; padding: 40px; border-radius: 20px; border: 2px solid var(--primary); display: flex; flex-direction: column; align-items: center;}
 
         input { width: 100%; padding: 15px; border-radius: 12px; border: none; text-align: center; font-size: 1.2rem; font-family: 'Tajawal'; margin-bottom: 15px; }
@@ -127,14 +174,23 @@
     </div>
 
     <!-- ==================== 1. Landing Screen ==================== -->
-    <!-- هنا تم وضع الصورة كخلفية صافية 100% بدون أي تظليل والكلمة فوق والزر تحت -->
-    <div id="scr-landing" class="screen active" style="background-image: url('jmarek.png'); background-size: cover; background-position: center; justify-content: space-between; padding-top: 60px; padding-bottom: 60px;">
-        <h1 style="font-size:4.5rem; margin:0; color:white; text-shadow: 0 5px 15px rgba(0,0,0,1), 0 0 30px rgba(0,0,0,0.8); text-align:center; font-weight:900;">لعبة الجمارك</h1>
+    <div id="scr-landing" class="screen active" style="justify-content: space-between; padding-bottom: 60px;">
+        
+        <!-- أزرار اختيار نمط اللعب -->
+        <div class="mode-container">
+            <button id="mode-auto" class="mode-btn active-mode" onclick="setGameMode('auto')">تلقائي 🎲</button>
+            <button id="mode-manual" class="mode-btn" onclick="setGameMode('manual')">يدوي 🤚</button>
+        </div>
+
+        <div class="title-banner">
+            <h1 style="color:white;">لعبة الجمارك</h1>
+        </div>
+        
         <button class="btn btn-gold" style="font-size:1.5rem; padding:20px; box-shadow: 0 10px 20px rgba(0,0,0,0.8);" onclick="createGame()">ابدأ اللعب 🚀</button>
     </div>
 
     <!-- ==================== 2. Host (TV) Screen ==================== -->
-    <div id="scr-tv" class="screen">
+    <div id="scr-tv" class="screen" style="background-image:none;"> <!-- إلغاء الصورة داخل اللعبة -->
         <button class="btn btn-gold" style="position:absolute; top:20px; right:20px; width:auto; margin:0; z-index:100; font-size:1.1rem; padding:10px 20px;" onclick="document.getElementById('tv-qr-modal').style.display='flex'">📱 الباركود</button>
 
         <div id="tv-lobby" class="glass-panel" style="max-width:800px; margin-top:60px;">
@@ -157,12 +213,13 @@
 
             <div class="scoreboard" id="tv-scoreboard"></div>
             
-            <button class="btn btn-gold" id="btn-next-round" style="display:none; margin-top:30px;" onclick="nextRound()">🔄 الجولة التالية (تغيير الجمركي)</button>
+            <!-- زر الدورة المتتالية -->
+            <button class="btn btn-gold" id="btn-next-round" style="display:none; margin-top:30px; font-size:1.5rem; padding:15px 40px;" onclick="nextRound()">🔄 بدء الجولة القادمة</button>
         </div>
     </div>
 
     <!-- ==================== 3. Player Screen ==================== -->
-    <div id="scr-player" class="screen">
+    <div id="scr-player" class="screen" style="background-image:none;">
         <div id="p-login" class="glass-panel">
             <h2>مرحباً بك في الحدود 🛂</h2>
             <input type="text" id="p-name" placeholder="اكتب اسمك هنا..." maxlength="12">
@@ -180,17 +237,31 @@
                 <h2 id="p-wait-msg">انتظر...</h2>
             </div>
 
+            <!-- قسم المسافر (يتم التبديل بين التلقائي واليدوي) -->
             <div id="p-smuggler" class="glass-panel" style="display:none; padding:15px;">
                 
-                <div id="draw-section">
-                    <h2 style="color:var(--accent); margin-top:0;">حان وقت التفتيش 🧳</h2>
-                    <p style="font-size:1.1rem; color:#ccc;">اسحب 5 بطاقات عشوائياً لتعرف ما بداخل حقيبتك لهذه الجولة!</p>
-                    <button class="btn btn-gold" style="width:100%; font-size:1.5rem; padding:20px;" onclick="drawCards()">اسحب بطائقي 🃏</button>
+                <!-- الواجهة التلقائية -->
+                <div id="smuggler-auto" style="display:none;">
+                    <div id="draw-section">
+                        <h2 style="color:var(--accent); margin-top:0;">حان وقت التفتيش 🧳</h2>
+                        <p style="font-size:1.1rem; color:#ccc;">اسحب 5 بطاقات عشوائياً لتعرف ما بداخل حقيبتك لهذه الجولة!</p>
+                        <button class="btn btn-gold" style="width:100%; font-size:1.5rem; padding:20px;" onclick="drawCards()">اسحب بطائقي 🃏</button>
+                    </div>
+
+                    <div id="review-section" style="display:none;">
+                        <h3 style="margin:0 0 15px 0; color:var(--accent);">هذه حقيبتك للعبور 🎒</h3>
+                        <div id="p-goods-grid-auto" class="goods-grid"></div>
+                        <button class="btn btn-green" style="width:100%; margin-top:20px;" onclick="submitBag()">اقفل الحقيبة وتوجه للجمركي</button>
+                    </div>
                 </div>
 
-                <div id="review-section" style="display:none;">
-                    <h3 style="margin:0 0 15px 0; color:var(--accent);">هذه حقيبتك للعبور 🎒</h3>
-                    <div id="p-goods-grid" class="goods-grid"></div>
+                <!-- الواجهة اليدوية -->
+                <div id="smuggler-manual" style="display:none;">
+                    <h3 style="margin:0 0 5px 0; color:var(--accent);">جهز حقيبتك 🧳</h3>
+                    <p style="font-size:0.9rem; color:#ccc; margin:0 0 15px 0;">اختر 5 أغراض بنفسك للعبور بها</p>
+                    <div style="font-size:1.1rem; font-weight:bold; margin-bottom:10px;">اخترت: <span id="p-sel-count-manual" style="color:var(--gold)">0</span> / 5</div>
+                    
+                    <div id="p-goods-grid-manual" class="goods-grid"></div>
                     <button class="btn btn-green" style="width:100%; margin-top:20px;" onclick="submitBag()">اقفل الحقيبة وتوجه للجمركي</button>
                 </div>
 
@@ -250,6 +321,13 @@
         localStorage.setItem('jam_uid', myId);
         let myName = '';
         let myBag = []; 
+        let selectedMode = 'auto'; // نمط اللعب الافتراضي
+
+        function setGameMode(mode) {
+            selectedMode = mode;
+            document.getElementById('mode-auto').classList.toggle('active-mode', mode === 'auto');
+            document.getElementById('mode-manual').classList.toggle('active-mode', mode === 'manual');
+        }
 
         function playAudio() { 
             const audio = document.getElementById('expl-audio');
@@ -279,7 +357,8 @@
         function createGame() {
             roomId = Math.random().toString(36).substr(2, 6).toUpperCase();
             window.history.pushState({}, '', `?room=${roomId}`);
-            db.ref(`jamarek/${roomId}`).set({ state: 'lobby', officerIndex: 0, round: 1 });
+            // إرسال نمط اللعب إلى قاعدة البيانات
+            db.ref(`jamarek/${roomId}`).set({ state: 'lobby', officerIndex: 0, round: 1, mode: selectedMode });
             window.location.href = `?room=${roomId}&mode=tv`;
         }
 
@@ -309,6 +388,8 @@
                 
                 let updates = {};
                 updates['state'] = 'selecting';
+                
+                // النظام هنا يضمن تدوير الجمركي بشكل عادل على الجميع بلا تكرار حتى تنتهي الدورة
                 updates['officerIndex'] = data.officerIndex + 1; 
                 updates['round'] = data.round + 1;
                 
@@ -361,7 +442,8 @@
                     document.getElementById('officer-announce').innerText = `👮‍♂️ الجمركي: ${officerName}`;
                     
                     if(data.state === 'selecting') {
-                        document.getElementById('tv-status-msg').innerText = "المسافرون يسحبون بطاقاتهم 🧳...";
+                        const msg = data.mode === 'auto' ? "المسافرون يسحبون بطاقاتهم 🧳..." : "المسافرون يختارون بضائعهم 🧳...";
+                        document.getElementById('tv-status-msg').innerText = msg;
                         document.getElementById('btn-next-round').style.display = 'none';
                     } else if (data.state === 'inspecting') {
                         document.getElementById('tv-status-msg').innerText = "الجمركي يفتش الآن 🔍!";
@@ -405,6 +487,17 @@
                     showPlayerDash();
                 }
             });
+
+            // تجهيز الشبكة اليدوية (في حال تم اختيار نمط يدوي)
+            const gridManual = document.getElementById('p-goods-grid-manual');
+            gridManual.innerHTML = '';
+            GOODS.forEach(g => {
+                const el = document.createElement('div');
+                el.className = `good-item good-item-manual ${g.type === 'illegal' ? 'illegal' : ''}`;
+                el.innerHTML = `<span>${g.name}</span><span class="pts-badge">${g.pts} ريال</span>`;
+                el.onclick = () => toggleGoodManual(g, el);
+                gridManual.appendChild(el);
+            });
         }
 
         function joinGame() {
@@ -447,25 +540,44 @@
                 else if(data.state === 'selecting') {
                     if(amIOfficer) {
                         document.getElementById('p-wait').style.display = 'block';
-                        document.getElementById('p-wait-msg').innerText = "أنت الجمركي! انتظر المهربين يسحبون بطايقهم 👮‍♂️";
+                        document.getElementById('p-wait-msg').innerText = "أنت الجمركي! انتظر المهربين يجهزون شنطهم 👮‍♂️";
                     } else {
                         document.getElementById('p-smuggler').style.display = 'block';
                         
-                        if(me.hasSelected) {
-                            document.getElementById('draw-section').style.display = 'none';
-                            document.getElementById('review-section').style.display = 'none';
+                        // التبديل بين الواجهة التلقائية واليدوية بناءً على إعدادات المضيف
+                        if(data.mode === 'auto') {
+                            document.getElementById('smuggler-auto').style.display = 'block';
+                            document.getElementById('smuggler-manual').style.display = 'none';
                             
-                            document.getElementById('p-smuggler').style.display = 'none';
-                            document.getElementById('p-wait').style.display = 'block';
-                            document.getElementById('p-wait-msg').innerText = "تم قفل الحقيبة! انتظر دورك في التفتيش...";
-                        } else if(me.bag && me.bag.length === 5) {
-                            myBag = me.bag;
-                            renderDrawnCards();
-                            document.getElementById('draw-section').style.display = 'none';
-                            document.getElementById('review-section').style.display = 'block';
+                            if(me.hasSelected) {
+                                document.getElementById('draw-section').style.display = 'none';
+                                document.getElementById('review-section').style.display = 'none';
+                                document.getElementById('p-smuggler').style.display = 'none';
+                                document.getElementById('p-wait').style.display = 'block';
+                                document.getElementById('p-wait-msg').innerText = "تم قفل الحقيبة! انتظر دورك...";
+                            } else if(me.bag && me.bag.length === 5) {
+                                myBag = me.bag;
+                                renderDrawnCards();
+                                document.getElementById('draw-section').style.display = 'none';
+                                document.getElementById('review-section').style.display = 'block';
+                            } else {
+                                document.getElementById('draw-section').style.display = 'block';
+                                document.getElementById('review-section').style.display = 'none';
+                            }
                         } else {
-                            document.getElementById('draw-section').style.display = 'block';
-                            document.getElementById('review-section').style.display = 'none';
+                            // نمط يدوي
+                            document.getElementById('smuggler-auto').style.display = 'none';
+                            document.getElementById('smuggler-manual').style.display = 'block';
+
+                            if(me.hasSelected) {
+                                document.getElementById('p-smuggler').style.display = 'none';
+                                document.getElementById('p-wait').style.display = 'block';
+                                document.getElementById('p-wait-msg').innerText = "تم إرسال الحقيبة بنجاح!";
+                            } else if (!me.bag) {
+                                myBag = [];
+                                document.getElementById('p-sel-count-manual').innerText = "0";
+                                document.querySelectorAll('.good-item-manual').forEach(el => el.classList.remove('selected'));
+                            }
                         }
                     }
                 }
@@ -483,6 +595,9 @@
             });
         }
 
+        // =====================================
+        // دوال الاختيار التلقائي (Auto Mode)
+        // =====================================
         function drawCards() {
             db.ref(`jamarek/${roomId}/players/${myId}`).once('value', snap => {
                 const me = snap.val();
@@ -501,7 +616,6 @@
                 for(let i=0; i<(5-newIllegalCount); i++) newBag.push(legals[i]);
 
                 newBag.sort(() => 0.5 - Math.random());
-                
                 myBag = newBag;
 
                 renderDrawnCards();
@@ -516,21 +630,43 @@
         }
 
         function renderDrawnCards() {
-            const grid = document.getElementById('p-goods-grid');
+            const grid = document.getElementById('p-goods-grid-auto');
             grid.innerHTML = '';
-            
             myBag.forEach((g, index) => {
                 const el = document.createElement('div');
-                el.className = `good-item ${g.type === 'illegal' ? 'illegal' : ''}`;
+                el.className = `good-item good-item-anim ${g.type === 'illegal' ? 'illegal' : ''}`;
                 el.style.animationDelay = `${index * 0.1}s`; 
                 el.innerHTML = `<span>${g.name}</span><span class="pts-badge">${g.pts} ريال</span>`;
                 grid.appendChild(el);
             });
         }
 
-        function submitBag() {
-            db.ref(`jamarek/${roomId}/players/${myId}`).update({ hasSelected: true });
+        // =====================================
+        // دوال الاختيار اليدوي (Manual Mode)
+        // =====================================
+        function toggleGoodManual(item, el) {
+            const idx = myBag.findIndex(i => i.id === item.id);
+            if(idx > -1) {
+                myBag.splice(idx, 1);
+                el.classList.remove('selected');
+            } else {
+                if(myBag.length >= 5) return alert("الحد الأقصى 5 أغراض فقط!");
+                myBag.push(item);
+                el.classList.add('selected');
+            }
+            document.getElementById('p-sel-count-manual').innerText = myBag.length;
+        }
 
+        // إرسال الحقيبة النهائي (لكلا النمطين)
+        function submitBag() {
+            if(myBag.length === 0) return alert("الحقيبة فارغة!");
+            
+            db.ref(`jamarek/${roomId}/players/${myId}`).update({ 
+                bag: myBag,
+                hasSelected: true 
+            });
+
+            // التحقق إذا كان الجميع جاهزاً
             db.ref(`jamarek/${roomId}`).once('value', snap => {
                 const data = snap.val();
                 const pKeys = Object.keys(data.players).sort();
@@ -547,6 +683,9 @@
             });
         }
 
+        // =====================================
+        // Officer Actions
+        // =====================================
         function renderOfficerTargets(players, offId) {
             const list = document.getElementById('p-targets-list');
             list.innerHTML = '';
