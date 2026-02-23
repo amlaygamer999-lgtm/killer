@@ -13,17 +13,17 @@
 
     <style>
         :root {
-            --primary: #1e3a8a; /* كحلي شرطة */
+            --primary: #1e3a8a; 
             --secondary: #3b82f6; 
-            --accent: #f59e0b; /* ذهبي/أصفر */
+            --accent: #f59e0b; 
             --danger: #ef4444; 
             --success: #10b981;
             --text-light: #f8fafc;
-            --bg-dark: rgba(15, 23, 42, 0.65); /* تم تفتيح الخلفية الزجاجية قليلاً لتظهر الصورة بوضوح */
         }
 
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
 
+        /* تعديل الخلفية لتكون تدرج لوني كحلي أثناء اللعب داخل الموقع */
         body {
             margin: 0; padding: 0;
             font-family: 'Tajawal', sans-serif;
@@ -31,25 +31,14 @@
             height: 100vh;
             overflow: hidden;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background-color: #0f172a;
-            
-            /* تم تعديل الصيغة هنا إلى png لتطابق صورتك */
-            background-image: url('jmarek.png'); 
-            background-size: cover;
-            background-position: center;
-        }
-
-        /* الطبقة الزجاجية فوق الخلفية */
-        body::before {
-            content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
-            background: var(--bg-dark); z-index: -1;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
         }
 
         .screen { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: flex-start; position: absolute; top: 0; left: 0; overflow-y: auto; padding: 20px; z-index: 10; }
         .active { display: flex; }
 
         .glass-panel {
-            background: rgba(0, 0, 0, 0.6); /* تغميق اللوحات قليلاً لتبرز فوق الخلفية الفاتحة */
+            background: rgba(0, 0, 0, 0.5); 
             backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.5);
             padding: 20px; width: 100%; max-width: 600px; text-align: center;
@@ -79,15 +68,19 @@
         /* --- Player Goods --- */
         .goods-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; margin-top: 15px; }
         .good-item { 
-            background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.2);
-            border-radius: 12px; padding: 15px 5px; font-weight: bold; cursor: pointer;
-            transition: 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 12px; padding: 15px 5px; font-weight: bold; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            animation: slideUp 0.4s ease-out forwards; opacity: 0; transform: translateY(20px);
         }
-        .good-item.selected { background: var(--primary); border-color: white; transform: scale(0.95); }
-        .good-item.illegal { border-color: rgba(239, 68, 68, 0.5); }
-        .good-item.illegal.selected { background: var(--danger); border-color: white; }
         
-        .pts-badge { font-size: 0.8rem; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 10px; margin-top: 5px; }
+        @keyframes slideUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .good-item.illegal { border-color: rgba(239, 68, 68, 0.8); background: rgba(239, 68, 68, 0.2); }
+        
+        .pts-badge { font-size: 0.8rem; background: rgba(0,0,0,0.7); padding: 2px 8px; border-radius: 10px; margin-top: 5px; color:var(--gold);}
 
         /* --- Officer Dashboard --- */
         .target-card { background: rgba(0,0,0,0.7); padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #ffffff22; }
@@ -114,10 +107,8 @@
 </head>
 <body>
 
-    <!-- ربط المقطع الصوتي بالملف المحلي Description.mp3 -->
     <audio id="expl-audio" src="Description.mp3"></audio>
 
-    <!-- شاشة النتيجة المنبثقة -->
     <div id="result-modal">
         <div class="result-content">
             <h1 id="rm-title" style="font-size:3rem; margin:0 0 10px 0;">...</h1>
@@ -127,7 +118,6 @@
         </div>
     </div>
 
-    <!-- شاشة الباركود المنبثقة (تظهر عند الطلب من الشاشة الرئيسية) -->
     <div id="tv-qr-modal">
         <div class="qr-modal-content">
             <h2 style="margin-top:0; color:white;">امسح الباركود للانضمام</h2>
@@ -137,21 +127,16 @@
     </div>
 
     <!-- ==================== 1. Landing Screen ==================== -->
-    <div id="scr-landing" class="screen active" style="justify-content:flex-end; padding-bottom:50px;">
-        <div style="background:rgba(0,0,0,0.8); padding:20px; border-radius:20px; margin-bottom:auto; margin-top:20px; text-align:center;">
-            <h1 style="font-size:4rem; margin:0; color:white; text-shadow:0 0 20px black;">لعبة الجمارك 👮‍♂️</h1>
-            <p style="font-size:1.5rem; color:#ccc; margin:5px 0;">التفتيش، التهريب، والمكاسب!</p>
-        </div>
-        <button class="btn btn-gold" style="font-size:1.5rem; padding:20px;" onclick="createGame()">ابدأ اللعب 🚀</button>
+    <!-- هنا تم وضع الصورة كخلفية صافية 100% بدون أي تظليل والكلمة فوق والزر تحت -->
+    <div id="scr-landing" class="screen active" style="background-image: url('jmarek.png'); background-size: cover; background-position: center; justify-content: space-between; padding-top: 60px; padding-bottom: 60px;">
+        <h1 style="font-size:4.5rem; margin:0; color:white; text-shadow: 0 5px 15px rgba(0,0,0,1), 0 0 30px rgba(0,0,0,0.8); text-align:center; font-weight:900;">لعبة الجمارك</h1>
+        <button class="btn btn-gold" style="font-size:1.5rem; padding:20px; box-shadow: 0 10px 20px rgba(0,0,0,0.8);" onclick="createGame()">ابدأ اللعب 🚀</button>
     </div>
 
     <!-- ==================== 2. Host (TV) Screen ==================== -->
     <div id="scr-tv" class="screen">
-        
-        <!-- زر الباركود الدائم فوق يمين -->
         <button class="btn btn-gold" style="position:absolute; top:20px; right:20px; width:auto; margin:0; z-index:100; font-size:1.1rem; padding:10px 20px;" onclick="document.getElementById('tv-qr-modal').style.display='flex'">📱 الباركود</button>
 
-        <!-- حالة الانتظار (Lobby) -->
         <div id="tv-lobby" class="glass-panel" style="max-width:800px; margin-top:60px;">
             <h2>امسح الباركود لدخول اللعبة</h2>
             <div id="qr-container"></div>
@@ -164,7 +149,6 @@
             <div id="tv-players-list" style="margin-bottom:20px;"></div>
         </div>
 
-        <!-- حالة اللعب -->
         <div id="tv-game" style="display:none; width:100%; max-width:800px; margin-top:60px;">
             <div class="glass-panel">
                 <h3 id="tv-status-msg" style="color:#aaa; margin:0;">الجولة الحالية</h3>
@@ -179,39 +163,40 @@
 
     <!-- ==================== 3. Player Screen ==================== -->
     <div id="scr-player" class="screen">
-        
-        <!-- تسجيل الدخول -->
         <div id="p-login" class="glass-panel">
             <h2>مرحباً بك في الحدود 🛂</h2>
             <input type="text" id="p-name" placeholder="اكتب اسمك هنا..." maxlength="12">
             <button class="btn btn-green" onclick="joinGame()">دخول اللعبة</button>
         </div>
 
-        <!-- لوحة تحكم اللاعب -->
         <div id="p-dash" style="display:none; width:100%; max-width:500px;">
             <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.8); padding:10px 20px; border-radius:15px; margin-bottom:15px;">
                 <span id="p-name-disp" style="font-weight:bold; font-size:1.2rem;">...</span>
                 <span style="color:var(--success); font-weight:bold; font-size:1.2rem;"><span id="p-money-disp">100</span> ريال 💰</span>
             </div>
 
-            <!-- حالة الانتظار -->
             <div id="p-wait" class="glass-panel" style="display:none;">
                 <h1 style="font-size:4rem; margin:10px;">⏳</h1>
                 <h2 id="p-wait-msg">انتظر...</h2>
             </div>
 
-            <!-- حالة المسافر (اختيار البضائع) -->
             <div id="p-smuggler" class="glass-panel" style="display:none; padding:15px;">
-                <h3 style="margin:0 0 5px 0; color:var(--accent);">جهز حقيبتك 🧳</h3>
-                <p style="font-size:0.9rem; color:#aaa; margin:0 0 15px 0;">اختر 5 أغراض كحد أقصى للعبور بها</p>
                 
-                <div style="font-size:1.1rem; font-weight:bold; margin-bottom:10px;">اخترت: <span id="p-sel-count" style="color:var(--gold)">0</span> / 5</div>
-                
-                <div id="p-goods-grid" class="goods-grid"></div>
-                <button class="btn btn-green" style="width:100%; margin-top:20px;" onclick="submitBag()">إغلاق الحقيبة والتوجه للتفتيش</button>
+                <div id="draw-section">
+                    <h2 style="color:var(--accent); margin-top:0;">حان وقت التفتيش 🧳</h2>
+                    <p style="font-size:1.1rem; color:#ccc;">اسحب 5 بطاقات عشوائياً لتعرف ما بداخل حقيبتك لهذه الجولة!</p>
+                    <button class="btn btn-gold" style="width:100%; font-size:1.5rem; padding:20px;" onclick="drawCards()">اسحب بطائقي 🃏</button>
+                </div>
+
+                <div id="review-section" style="display:none;">
+                    <h3 style="margin:0 0 15px 0; color:var(--accent);">هذه حقيبتك للعبور 🎒</h3>
+                    <div id="p-goods-grid" class="goods-grid"></div>
+                    <button class="btn btn-green" style="width:100%; margin-top:20px;" onclick="submitBag()">اقفل الحقيبة وتوجه للجمركي</button>
+                </div>
+
             </div>
 
-            <!-- حالة الجمركي (تفتيش) -->
+            <!-- الجمركي -->
             <div id="p-officer" style="display:none; width:100%;">
                 <div class="glass-panel" style="margin-bottom:15px; background:rgba(220, 38, 38, 0.4); border-color:var(--danger);">
                     <h2 style="margin:0; color:var(--danger);">👮‍♂️ أنت الجمركي!</h2>
@@ -224,9 +209,6 @@
 
     <!-- Script -->
     <script>
-        // =====================================
-        // منطق الباركود الذكي لدخول مستخدم جديد
-        // =====================================
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('scan') === '1') {
             localStorage.removeItem('jam_uid'); 
@@ -234,7 +216,6 @@
             window.history.replaceState({}, document.title, newUrl);
         }
 
-        // --- Firebase Config ---
         const firebaseConfig = {
             apiKey: "AIzaSyDh4v9gRCICA_XRCJXsDpbtCySYAoFsfhk",
             authDomain: "bagera-word.firebaseapp.com",
@@ -247,7 +228,6 @@
         try { if(firebase.apps.length === 0) firebase.initializeApp(firebaseConfig); else firebase.app(); } catch(e) {}
         const db = firebase.database();
 
-        // --- Game Data ---
         const GOODS = [
             { id: 'l1', name: '🧀 جبن', type: 'legal', pts: 5 },
             { id: 'l2', name: '🥛 حليب', type: 'legal', pts: 5 },
@@ -258,7 +238,7 @@
             { id: 'i1', name: '🍷 خمر', type: 'illegal', pts: 10 },
             { id: 'i2', name: '🥓 لحم خنزير', type: 'illegal', pts: 10 },
             { id: 'i3', name: '🫖 شاهي حليب عموري', type: 'illegal', pts: 10 },
-            { id: 'i4', name: '🥪 ساندويش من كي بي اس', type: 'illegal', pts: 10 },
+            { id: 'i4', name: '🥪 ساندويش KBS', type: 'illegal', pts: 10 },
             { id: 'i5', name: '🔪 سكين', type: 'illegal', pts: 10 },
             { id: 'i6', name: '🔫 مسدس', type: 'illegal', pts: 10 }
         ];
@@ -269,7 +249,7 @@
         let myId = localStorage.getItem('jam_uid') || 'u_'+Date.now();
         localStorage.setItem('jam_uid', myId);
         let myName = '';
-        let myBag = [];
+        let myBag = []; 
 
         function playAudio() { 
             const audio = document.getElementById('expl-audio');
@@ -281,7 +261,6 @@
             }
         }
 
-        // --- Routing ---
         window.onload = function() {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             if(role === 'player') { 
@@ -297,7 +276,6 @@
             }
         };
 
-        // --- Host/TV Actions ---
         function createGame() {
             roomId = Math.random().toString(36).substr(2, 6).toUpperCase();
             window.history.pushState({}, '', `?room=${roomId}`);
@@ -344,16 +322,13 @@
             });
         }
 
-        // دالة تعديل أموال اللاعب من الشاشة الرئيسية (للمضيف)
         window.editPlayerMoney = function(playerId, currentMoney) {
             const newVal = prompt(`الرصيد الحالي للاعب هو: ${currentMoney} ريال\n\nأدخل الرصيد الجديد الذي تريده (للتعويض أو التعديل):`, currentMoney);
-            
             if(newVal !== null && newVal.trim() !== '' && !isNaN(parseInt(newVal))) {
                 db.ref(`jamarek/${roomId}/players/${playerId}/money`).set(parseInt(newVal));
             }
         }
 
-        // --- TV Logic ---
         function initTV() {
             generateQR();
             db.ref(`jamarek/${roomId}`).on('value', snap => {
@@ -386,7 +361,7 @@
                     document.getElementById('officer-announce').innerText = `👮‍♂️ الجمركي: ${officerName}`;
                     
                     if(data.state === 'selecting') {
-                        document.getElementById('tv-status-msg').innerText = "المسافرون يجهزون حقائبهم 🧳...";
+                        document.getElementById('tv-status-msg').innerText = "المسافرون يسحبون بطاقاتهم 🧳...";
                         document.getElementById('btn-next-round').style.display = 'none';
                     } else if (data.state === 'inspecting') {
                         document.getElementById('tv-status-msg').innerText = "الجمركي يفتش الآن 🔍!";
@@ -423,22 +398,12 @@
             });
         }
 
-        // --- Player Logic ---
         function initPlayer() {
             db.ref(`jamarek/${roomId}/players/${myId}`).once('value', snap => {
                 if(snap.exists()) {
                     myName = snap.val().name;
                     showPlayerDash();
                 }
-            });
-
-            const grid = document.getElementById('p-goods-grid');
-            GOODS.forEach(g => {
-                const el = document.createElement('div');
-                el.className = `good-item ${g.type === 'illegal' ? 'illegal' : ''}`;
-                el.innerHTML = `<span>${g.name}</span><span class="pts-badge">${g.pts} ريال</span>`;
-                el.onclick = () => toggleGood(g, el);
-                grid.appendChild(el);
             });
         }
 
@@ -450,7 +415,8 @@
                 name: myName,
                 money: 100, 
                 status: 'waiting',
-                hasSelected: false
+                hasSelected: false,
+                lastIllegalCount: -1
             });
             showPlayerDash();
         }
@@ -481,16 +447,25 @@
                 else if(data.state === 'selecting') {
                     if(amIOfficer) {
                         document.getElementById('p-wait').style.display = 'block';
-                        document.getElementById('p-wait-msg').innerText = "أنت الجمركي! انتظر المهربين يجهزون حقائبهم 👮‍♂️";
+                        document.getElementById('p-wait-msg').innerText = "أنت الجمركي! انتظر المهربين يسحبون بطايقهم 👮‍♂️";
                     } else {
+                        document.getElementById('p-smuggler').style.display = 'block';
+                        
                         if(me.hasSelected) {
+                            document.getElementById('draw-section').style.display = 'none';
+                            document.getElementById('review-section').style.display = 'none';
+                            
+                            document.getElementById('p-smuggler').style.display = 'none';
                             document.getElementById('p-wait').style.display = 'block';
-                            document.getElementById('p-wait-msg').innerText = "تم قفل الحقيبة! انتظر التفتيش...";
+                            document.getElementById('p-wait-msg').innerText = "تم قفل الحقيبة! انتظر دورك في التفتيش...";
+                        } else if(me.bag && me.bag.length === 5) {
+                            myBag = me.bag;
+                            renderDrawnCards();
+                            document.getElementById('draw-section').style.display = 'none';
+                            document.getElementById('review-section').style.display = 'block';
                         } else {
-                            document.getElementById('p-smuggler').style.display = 'block';
-                            myBag = []; 
-                            updateBagCount();
-                            document.querySelectorAll('.good-item').forEach(el => el.classList.remove('selected'));
+                            document.getElementById('draw-section').style.display = 'block';
+                            document.getElementById('review-section').style.display = 'none';
                         }
                     }
                 }
@@ -508,29 +483,53 @@
             });
         }
 
-        // Smuggler Actions
-        function toggleGood(item, el) {
-            const idx = myBag.findIndex(i => i.id === item.id);
-            if(idx > -1) {
-                myBag.splice(idx, 1);
-                el.classList.remove('selected');
-            } else {
-                if(myBag.length >= 5) return alert("الحد الأقصى 5 أغراض!");
-                myBag.push(item);
-                el.classList.add('selected');
-            }
-            updateBagCount();
+        function drawCards() {
+            db.ref(`jamarek/${roomId}/players/${myId}`).once('value', snap => {
+                const me = snap.val();
+                const lastCount = me.lastIllegalCount !== undefined ? me.lastIllegalCount : -1;
+
+                let newIllegalCount;
+                do {
+                    newIllegalCount = Math.floor(Math.random() * 6); 
+                } while (newIllegalCount === lastCount);
+
+                const legals = GOODS.filter(g => g.type === 'legal').sort(() => 0.5 - Math.random());
+                const illegals = GOODS.filter(g => g.type === 'illegal').sort(() => 0.5 - Math.random());
+
+                const newBag = [];
+                for(let i=0; i<newIllegalCount; i++) newBag.push(illegals[i]);
+                for(let i=0; i<(5-newIllegalCount); i++) newBag.push(legals[i]);
+
+                newBag.sort(() => 0.5 - Math.random());
+                
+                myBag = newBag;
+
+                renderDrawnCards();
+                document.getElementById('draw-section').style.display = 'none';
+                document.getElementById('review-section').style.display = 'block';
+
+                db.ref(`jamarek/${roomId}/players/${myId}`).update({
+                    bag: myBag,
+                    lastIllegalCount: newIllegalCount
+                });
+            });
         }
 
-        function updateBagCount() {
-            document.getElementById('p-sel-count').innerText = myBag.length;
+        function renderDrawnCards() {
+            const grid = document.getElementById('p-goods-grid');
+            grid.innerHTML = '';
+            
+            myBag.forEach((g, index) => {
+                const el = document.createElement('div');
+                el.className = `good-item ${g.type === 'illegal' ? 'illegal' : ''}`;
+                el.style.animationDelay = `${index * 0.1}s`; 
+                el.innerHTML = `<span>${g.name}</span><span class="pts-badge">${g.pts} ريال</span>`;
+                grid.appendChild(el);
+            });
         }
 
         function submitBag() {
-            db.ref(`jamarek/${roomId}/players/${myId}`).update({
-                bag: myBag,
-                hasSelected: true
-            });
+            db.ref(`jamarek/${roomId}/players/${myId}`).update({ hasSelected: true });
 
             db.ref(`jamarek/${roomId}`).once('value', snap => {
                 const data = snap.val();
@@ -548,7 +547,6 @@
             });
         }
 
-        // Officer Actions
         function renderOfficerTargets(players, offId) {
             const list = document.getElementById('p-targets-list');
             list.innerHTML = '';
@@ -602,7 +600,6 @@
                 let resultDesc = "";
 
                 if(!inspect) {
-                    // تمشية
                     updates[`${targetId}/money`] = target.money + totalBagVal;
                     updates[`${targetId}/status`] = 'passed';
                     resultTitle = `<span style='color:var(--success)'>تمشية ناجحة ✅</span>`;
@@ -611,13 +608,11 @@
                     updates[`${targetId}/status`] = 'inspected';
                     
                     if(illegalVal === 0) {
-                        // تفتيش سليم (ظالم)
                         updates[`${myId}/money`] = officer.money - legalVal;
                         updates[`${targetId}/money`] = target.money + legalVal;
                         resultTitle = `<span style='color:var(--primary)'>تفتيش ظالم! 🤦‍♂️</span>`;
                         resultDesc = `حقيبة ${target.name} نظيفة! الجمركي دفع تعويض ${legalVal} ريال للمسافر.`;
                     } else {
-                        // كفش ممنوعات
                         updates[`${myId}/money`] = officer.money + totalBagVal;
                         updates[`${targetId}/money`] = target.money - totalBagVal;
                         resultTitle = `<span style='color:var(--danger)'>كفش ممنوعات! 🚨</span>`;
@@ -636,7 +631,6 @@
             });
         }
 
-        // Global Modal Listener
         db.ref(`jamarek/${roomId}/latestResult`).on('value', snap => {
             const res = snap.val();
             if(res && (Date.now() - res.t < 10000)) { 
