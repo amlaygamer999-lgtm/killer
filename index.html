@@ -23,7 +23,7 @@
 
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
 
-        /* الخلفية الأساسية للموقع من الداخل (بدون صورة) */
+        /* الخلفية الأساسية (للمتسابقين والتلفزيون من الداخل) تكون بدون صورة لتسريع التحميل */
         body {
             margin: 0; padding: 0;
             font-family: 'Tajawal', sans-serif;
@@ -37,26 +37,26 @@
         .screen { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: flex-start; position: absolute; top: 0; left: 0; overflow-y: auto; padding: 20px; z-index: 10; }
         .active { display: flex; }
 
-        /* === شاشة البداية فقط (فيها الصورة واضحة 100%) === */
+        /* === شاشة البداية فقط === */
         #scr-landing {
-            background-image: url('jmarek.png'); 
             background-size: cover;
             background-position: center;
-            padding: 0; /* إزالة الحواف عشان البانر يلتصق بالسقف */
+            padding: 0;
             justify-content: space-between;
         }
 
-        /* بانر العنوان في أعلى الشاشة */
+        /* الإطار الزجاجي للعنوان - يلتف حول الكلمة فقط وفي أعلى الشاشة */
         .title-banner {
-            background: rgba(15, 23, 42, 0.6); /* شفافية خفيفة جداً فقط لإبراز النص */
-            backdrop-filter: blur(5px);
-            border-bottom: 3px solid var(--accent);
-            padding: 15px 20px;
-            border-radius: 0 0 30px 30px; /* تقويس من الأسفل فقط */
-            width: 100%;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            margin: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            border: 3px solid var(--accent);
+            border-top: none; /* إخفاء الحد العلوي ليلتصق بالسقف */
+            padding: 10px 40px;
+            border-radius: 0 0 30px 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            width: fit-content; /* يجعل العرض بحجم الكلمة فقط */
+            margin: 0 auto; /* توسيط أفقي */
+            align-self: flex-start; /* الالتصاق بأعلى الشاشة */
         }
 
         .title-banner h1 {
@@ -67,7 +67,6 @@
             font-weight: 900;
         }
 
-        /* حاوية الأزرار السفلية في شاشة البداية */
         .landing-bottom-controls {
             width: 100%;
             display: flex;
@@ -114,14 +113,12 @@
         .btn-green { background: linear-gradient(135deg, var(--success), #059669); }
         .btn-red { background: linear-gradient(135deg, var(--danger), #b91c1c); }
 
-        /* --- Landing & TV --- */
         #qr-container { background: white; padding: 15px; border-radius: 15px; display: inline-block; margin-bottom: 20px; }
         .player-badge { background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 50px; font-weight: bold; margin: 5px; display: inline-block; font-size:1.1rem; }
         
         .scoreboard { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
         .score-row { display: flex; justify-content: space-between; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 12px; border-left: 5px solid var(--accent); font-size:1.2rem; align-items: center;}
         
-        /* --- Player Goods --- */
         .goods-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; margin-top: 15px; }
         .good-item { 
             background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);
@@ -138,7 +135,6 @@
         
         .pts-badge { font-size: 0.8rem; background: rgba(0,0,0,0.7); padding: 2px 8px; border-radius: 10px; margin-top: 5px; color:var(--gold);}
 
-        /* --- Officer Dashboard --- */
         .target-card { background: rgba(0,0,0,0.7); padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #ffffff22; }
         .target-actions { display: flex; gap: 10px; margin-top: 10px; }
         .target-actions button { margin: 0; flex: 1; padding: 10px; font-size: 1rem; }
@@ -147,7 +143,6 @@
         .tag-passed { background: var(--success); }
         .tag-inspected { background: var(--primary); }
 
-        /* Modals */
         #result-modal, #tv-qr-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:9999; justify-content:center; align-items:center; flex-direction: column; text-align: center; padding: 20px;}
         .result-content { background: #1e293b; padding: 30px; border-radius: 20px; border: 2px solid var(--gold); max-width: 500px; width: 100%; }
         .qr-modal-content { background: #1e293b; padding: 40px; border-radius: 20px; border: 2px solid var(--primary); display: flex; flex-direction: column; align-items: center;}
@@ -169,12 +164,10 @@
             <h1 id="rm-title" style="font-size:3rem; margin:0 0 10px 0;">...</h1>
             <p id="rm-desc" style="font-size:1.5rem; color:#ccc;"></p>
             <div id="rm-items" style="font-size:1.2rem; margin:20px 0; color:var(--accent);"></div>
-            <!-- هذا الزر سيختفي تلقائياً من شاشة التلفزيون -->
             <button class="btn btn-gold" id="btn-close-modal" onclick="closeGlobalModal()">إغلاق الشاشة</button>
         </div>
     </div>
 
-    <!-- شاشة الباركود المنبثقة -->
     <div id="tv-qr-modal">
         <div class="qr-modal-content">
             <h2 style="margin-top:0; color:white;">امسح الباركود للانضمام</h2>
@@ -186,19 +179,16 @@
     <!-- ==================== 1. Landing Screen ==================== -->
     <div id="scr-landing" class="screen active">
         
-        <!-- عنوان اللعبة في أعلى الشاشة -->
+        <!-- العنوان في أعلى نقطة (حجم الكلمة فقط) -->
         <div class="title-banner">
             <h1 style="color:white;">لعبة الجمارك</h1>
         </div>
         
-        <!-- منطقة الأزرار في أسفل الشاشة -->
         <div class="landing-bottom-controls">
-            <!-- أزرار اختيار نمط اللعب -->
             <div class="mode-container">
                 <button id="mode-auto" class="mode-btn active-mode" onclick="setGameMode('auto')">تلقائي 🎲</button>
                 <button id="mode-manual" class="mode-btn" onclick="setGameMode('manual')">يدوي 🤚</button>
             </div>
-
             <button class="btn btn-gold" style="font-size:1.5rem; padding:20px; box-shadow: 0 10px 20px rgba(0,0,0,0.8);" onclick="createGame()">ابدأ اللعب 🚀</button>
         </div>
     </div>
@@ -227,7 +217,6 @@
 
             <div class="scoreboard" id="tv-scoreboard"></div>
             
-            <!-- زر الدورة المتتالية -->
             <button class="btn btn-gold" id="btn-next-round" style="display:none; margin-top:30px; font-size:1.5rem; padding:15px 40px;" onclick="nextRound()">🔄 بدء الجولة القادمة</button>
         </div>
     </div>
@@ -251,10 +240,8 @@
                 <h2 id="p-wait-msg">انتظر...</h2>
             </div>
 
-            <!-- قسم المسافر -->
             <div id="p-smuggler" class="glass-panel" style="display:none; padding:15px;">
-                
-                <!-- الواجهة التلقائية -->
+                <!-- التلقائي -->
                 <div id="smuggler-auto" style="display:none;">
                     <div id="draw-section">
                         <h2 style="color:var(--accent); margin-top:0;">حان وقت التفتيش 🧳</h2>
@@ -269,7 +256,7 @@
                     </div>
                 </div>
 
-                <!-- الواجهة اليدوية -->
+                <!-- اليدوي -->
                 <div id="smuggler-manual" style="display:none;">
                     <h3 style="margin:0 0 5px 0; color:var(--accent);">جهز حقيبتك 🧳</h3>
                     <p style="font-size:0.9rem; color:#ccc; margin:0 0 15px 0;">اختر 5 أغراض بنفسك للعبور بها</p>
@@ -278,7 +265,6 @@
                     <div id="p-goods-grid-manual" class="goods-grid"></div>
                     <button class="btn btn-green" style="width:100%; margin-top:20px;" onclick="submitBag()">اقفل الحقيبة وتوجه للجمركي</button>
                 </div>
-
             </div>
 
             <!-- الجمركي -->
@@ -330,13 +316,14 @@
 
         let roomId = new URLSearchParams(window.location.search).get('room');
         const role = new URLSearchParams(window.location.search).get('role');
-        const isTV = new URLSearchParams(window.location.search).get('mode') === 'tv'; // لمعرفة ما إذا كانت شاشة تلفزيون
+        const isTV = new URLSearchParams(window.location.search).get('mode') === 'tv'; 
         
         let myId = localStorage.getItem('jam_uid') || 'u_'+Date.now();
         localStorage.setItem('jam_uid', myId);
         let myName = '';
         let myBag = []; 
         let selectedMode = 'auto'; 
+        let currentLocalPlayers = {}; // لتسريع الاستجابة محلياً
 
         function setGameMode(mode) {
             selectedMode = mode;
@@ -346,12 +333,7 @@
 
         function playAudio() { 
             const audio = document.getElementById('expl-audio');
-            if(audio.paused) {
-                audio.play();
-            } else {
-                audio.pause();
-                audio.currentTime = 0;
-            }
+            if(audio.paused) { audio.play(); } else { audio.pause(); audio.currentTime = 0; }
         }
 
         window.onload = function() {
@@ -365,6 +347,8 @@
             } else if (roomId) {
                 window.location.href = `?room=${roomId}&role=player&scan=1`;
             } else { 
+                // تحميل صورة الخلفية فقط في شاشة البداية لتسريع جوالات اللاعبين
+                document.getElementById('scr-landing').style.backgroundImage = "url('jmarek.png')";
                 document.getElementById('scr-landing').classList.add('active'); 
             }
         };
@@ -416,7 +400,7 @@
         }
 
         window.editPlayerMoney = function(playerId, currentMoney) {
-            const newVal = prompt(`الرصيد الحالي للاعب هو: ${currentMoney} ريال\n\nأدخل الرصيد الجديد الذي تريده (للتعويض أو التعديل):`, currentMoney);
+            const newVal = prompt(`الرصيد الحالي: ${currentMoney} ريال\nأدخل الرصيد الجديد:`, currentMoney);
             if(newVal !== null && newVal.trim() !== '' && !isNaN(parseInt(newVal))) {
                 db.ref(`jamarek/${roomId}/players/${playerId}/money`).set(parseInt(newVal));
             }
@@ -459,7 +443,6 @@
                         document.getElementById('btn-next-round').style.display = 'none';
                     } else if (data.state === 'inspecting') {
                         document.getElementById('tv-status-msg').innerText = "الجمركي يفتش الآن 🔍!";
-                        
                         const allDone = pKeys.every(k => k === officerId || players[k].status !== 'waiting');
                         if(allDone) document.getElementById('btn-next-round').style.display = 'block';
                         else document.getElementById('btn-next-round').style.display = 'none';
@@ -475,7 +458,6 @@
                             else if(p.status === 'inspected') statusIcon = '🔍 فُتِش';
                             else statusIcon = '⏳ ينتظر';
                         }
-                        
                         return `
                         <div class="score-row">
                             <span style="font-weight:bold; color:${isOff ? 'var(--danger)' : 'white'};">
@@ -535,6 +517,9 @@
                 const data = snap.val();
                 if(!data || !data.players || !data.players[myId]) return;
 
+                // تحديث البيانات المحلية للاستجابة السريعة جداً
+                currentLocalPlayers = data.players;
+
                 const me = data.players[myId];
                 document.getElementById('p-money-disp').innerText = me.money;
 
@@ -554,7 +539,6 @@
                         document.getElementById('p-wait-msg').innerText = "أنت الجمركي! انتظر المهربين يجهزون شنطهم 👮‍♂️";
                     } else {
                         document.getElementById('p-smuggler').style.display = 'block';
-                        
                         if(data.mode === 'auto') {
                             document.getElementById('smuggler-auto').style.display = 'block';
                             document.getElementById('smuggler-manual').style.display = 'none';
@@ -605,34 +589,27 @@
         }
 
         function drawCards() {
-            db.ref(`jamarek/${roomId}/players/${myId}`).once('value', snap => {
-                const me = snap.val();
-                const lastCount = me.lastIllegalCount !== undefined ? me.lastIllegalCount : -1;
+            const me = currentLocalPlayers[myId];
+            const lastCount = me.lastIllegalCount !== undefined ? me.lastIllegalCount : -1;
 
-                let newIllegalCount;
-                do {
-                    newIllegalCount = Math.floor(Math.random() * 6); 
-                } while (newIllegalCount === lastCount);
+            let newIllegalCount;
+            do { newIllegalCount = Math.floor(Math.random() * 6); } while (newIllegalCount === lastCount);
 
-                const legals = GOODS.filter(g => g.type === 'legal').sort(() => 0.5 - Math.random());
-                const illegals = GOODS.filter(g => g.type === 'illegal').sort(() => 0.5 - Math.random());
+            const legals = GOODS.filter(g => g.type === 'legal').sort(() => 0.5 - Math.random());
+            const illegals = GOODS.filter(g => g.type === 'illegal').sort(() => 0.5 - Math.random());
 
-                const newBag = [];
-                for(let i=0; i<newIllegalCount; i++) newBag.push(illegals[i]);
-                for(let i=0; i<(5-newIllegalCount); i++) newBag.push(legals[i]);
+            const newBag = [];
+            for(let i=0; i<newIllegalCount; i++) newBag.push(illegals[i]);
+            for(let i=0; i<(5-newIllegalCount); i++) newBag.push(legals[i]);
 
-                newBag.sort(() => 0.5 - Math.random());
-                myBag = newBag;
+            newBag.sort(() => 0.5 - Math.random());
+            myBag = newBag;
 
-                renderDrawnCards();
-                document.getElementById('draw-section').style.display = 'none';
-                document.getElementById('review-section').style.display = 'block';
+            renderDrawnCards();
+            document.getElementById('draw-section').style.display = 'none';
+            document.getElementById('review-section').style.display = 'block';
 
-                db.ref(`jamarek/${roomId}/players/${myId}`).update({
-                    bag: myBag,
-                    lastIllegalCount: newIllegalCount
-                });
-            });
+            db.ref(`jamarek/${roomId}/players/${myId}`).update({ bag: myBag, lastIllegalCount: newIllegalCount });
         }
 
         function renderDrawnCards() {
@@ -662,11 +639,7 @@
 
         function submitBag() {
             if(myBag.length === 0) return alert("الحقيبة فارغة!");
-            
-            db.ref(`jamarek/${roomId}/players/${myId}`).update({ 
-                bag: myBag,
-                hasSelected: true 
-            });
+            db.ref(`jamarek/${roomId}/players/${myId}`).update({ bag: myBag, hasSelected: true });
 
             db.ref(`jamarek/${roomId}`).once('value', snap => {
                 const data = snap.val();
@@ -677,10 +650,7 @@
                 Object.keys(data.players).forEach(k => {
                     if(k !== officerId && !data.players[k].hasSelected) allReady = false;
                 });
-
-                if(allReady) {
-                    db.ref(`jamarek/${roomId}`).update({ state: 'inspecting' });
-                }
+                if(allReady) db.ref(`jamarek/${roomId}`).update({ state: 'inspecting' });
             });
         }
 
@@ -705,74 +675,64 @@
                     btnHtml = `<div style="text-align:left; margin-top:10px;"><span class="status-tag ${tagClass}">${tagText}</span></div>`;
                 }
 
-                list.innerHTML += `
-                <div class="target-card">
-                    <h3 style="margin:0; color:var(--gold);">👤 ${p.name}</h3>
-                    ${btnHtml}
-                </div>`;
+                list.innerHTML += `<div class="target-card"><h3 style="margin:0; color:var(--gold);">👤 ${p.name}</h3>${btnHtml}</div>`;
             });
         }
 
+        // استخدام البيانات المحلية لتسريع الاستجابة كسرعة البرق
         function processPlayer(targetId, inspect) {
-            db.ref(`jamarek/${roomId}/players`).once('value', snap => {
-                const players = snap.val();
-                const target = players[targetId];
-                const officer = players[myId];
-                
-                const bag = target.bag || [];
-                let legalVal = 0;
-                let illegalVal = 0;
-                let bagNames = [];
-                
-                bag.forEach(i => {
-                    bagNames.push(i.name);
-                    if(i.type === 'legal') legalVal += i.pts;
-                    else illegalVal += i.pts;
-                });
+            const players = currentLocalPlayers;
+            const target = players[targetId];
+            const officer = players[myId];
+            
+            const bag = target.bag || [];
+            let legalVal = 0, illegalVal = 0;
+            let bagNames = [];
+            
+            bag.forEach(i => {
+                bagNames.push(i.name);
+                if(i.type === 'legal') legalVal += i.pts;
+                else illegalVal += i.pts;
+            });
 
-                const totalBagVal = legalVal + illegalVal;
-                
-                let updates = {};
-                let resultTitle = "";
-                let resultDesc = "";
+            const totalBagVal = legalVal + illegalVal;
+            let updates = {};
+            let resultTitle = "", resultDesc = "";
 
-                if(!inspect) {
-                    updates[`${targetId}/money`] = target.money + totalBagVal;
-                    updates[`${targetId}/status`] = 'passed';
-                    resultTitle = `<span style='color:var(--success)'>تمشية ناجحة ✅</span>`;
-                    resultDesc = `عبر ${target.name} بسلام وكسب ${totalBagVal} ريال!`;
+            if(!inspect) {
+                updates[`${targetId}/money`] = target.money + totalBagVal;
+                updates[`${targetId}/status`] = 'passed';
+                resultTitle = `<span style='color:var(--success)'>تمشية ناجحة ✅</span>`;
+                resultDesc = `عبر ${target.name} بسلام وكسب ${totalBagVal} ريال!`;
+            } else {
+                updates[`${targetId}/status`] = 'inspected';
+                if(illegalVal === 0) {
+                    updates[`${myId}/money`] = officer.money - legalVal;
+                    updates[`${targetId}/money`] = target.money + legalVal;
+                    resultTitle = `<span style='color:var(--primary)'>تفتيش ظالم! 🤦‍♂️</span>`;
+                    resultDesc = `حقيبة ${target.name} نظيفة! الجمركي دفع تعويض ${legalVal} ريال للمسافر.`;
                 } else {
-                    updates[`${targetId}/status`] = 'inspected';
-                    
-                    if(illegalVal === 0) {
-                        updates[`${myId}/money`] = officer.money - legalVal;
-                        updates[`${targetId}/money`] = target.money + legalVal;
-                        resultTitle = `<span style='color:var(--primary)'>تفتيش ظالم! 🤦‍♂️</span>`;
-                        resultDesc = `حقيبة ${target.name} نظيفة! الجمركي دفع تعويض ${legalVal} ريال للمسافر.`;
-                    } else {
-                        updates[`${myId}/money`] = officer.money + totalBagVal;
-                        updates[`${targetId}/money`] = target.money - totalBagVal;
-                        resultTitle = `<span style='color:var(--danger)'>كفش ممنوعات! 🚨</span>`;
-                        resultDesc = `تم القبض على ${target.name}! دفع غرامة ${totalBagVal} ريال للجمركي.`;
-                    }
+                    updates[`${myId}/money`] = officer.money + totalBagVal;
+                    updates[`${targetId}/money`] = target.money - totalBagVal;
+                    resultTitle = `<span style='color:var(--danger)'>كفش ممنوعات! 🚨</span>`;
+                    resultDesc = `تم القبض على ${target.name}! دفع غرامة ${totalBagVal} ريال للجمركي.`;
                 }
+            }
 
-                db.ref(`jamarek/${roomId}/players`).update(updates);
-                
-                // إضافة متغير الإغلاق للتزامن
-                db.ref(`jamarek/${roomId}/latestResult`).set({
-                    t: Date.now(),
-                    title: resultTitle,
-                    desc: resultDesc,
-                    items: inspect ? `محتوى الحقيبة: ${bagNames.join(' ، ')}` : '',
-                    closed: false
-                });
+            db.ref(`jamarek/${roomId}/players`).update(updates);
+            db.ref(`jamarek/${roomId}/latestResult`).set({
+                t: Date.now(),
+                title: resultTitle,
+                desc: resultDesc,
+                items: inspect ? `محتوى الحقيبة: ${bagNames.join(' ، ')}` : '',
+                closed: false
             });
         }
 
-        // دالة لإغلاق الشاشة المنبثقة من قاعدة البيانات لكي تُغلق عند الجميع
+        // إغلاق الشاشة المنبثقة بشكل فوري محلياً وعالمياً
         function closeGlobalModal() {
-            db.ref(`jamarek/${roomId}/latestResult`).update({ closed: true });
+            document.getElementById('result-modal').style.display = 'none'; // إغلاق فوري في جوال الجمركي
+            db.ref(`jamarek/${roomId}/latestResult`).update({ closed: true }); // أمر للإغلاق في التلفزيون وباقي الجوالات
         }
 
         db.ref(`jamarek/${roomId}/latestResult`).on('value', snap => {
@@ -784,11 +744,10 @@
                 document.getElementById('rm-desc').innerHTML = res.desc;
                 document.getElementById('rm-items').innerHTML = res.items;
 
-                // إخفاء زر الإغلاق في شاشة التلفزيون، وإظهاره في جوالات اللاعبين
                 if (isTV) {
-                    document.getElementById('btn-close-modal').style.display = 'none';
+                    document.getElementById('btn-close-modal').style.display = 'none'; // التلفزيون ما يقدر يقفل
                 } else {
-                    document.getElementById('btn-close-modal').style.display = 'inline-block';
+                    document.getElementById('btn-close-modal').style.display = 'inline-block'; // الجمركي فقط هو اللي يقفل
                 }
 
                 modal.style.display = 'flex';
